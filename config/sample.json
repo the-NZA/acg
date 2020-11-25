@@ -1,0 +1,5 @@
+{
+	"bind_addr": ":9090",
+	"db_url": "mongodb://10.10.10.1:27019",
+	"log_level": "error"
+}
