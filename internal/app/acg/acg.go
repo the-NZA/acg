@@ -60,13 +60,14 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/about", s.handleAboutPage())
 	s.router.HandleFunc("/contacts", s.handleContactsPage())
 
-	// Static files
-	// TODO: Deliver this to NGINX later, with proxy and ssl
-	s.router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))
-
 	// Pages API routes
 	s.router.HandleFunc("/pages", s.handleGetPages()).Methods("GET")
 	s.router.HandleFunc("/pages", s.handleCreatePage()).Methods("POST")
+	s.router.HandleFunc("/pages", s.handleUpdatePage()).Methods("PUT")
+
+	// Static files
+	// TODO: Deliver this to NGINX later, with proxy and ssl
+	s.router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))
 }
 
 func (s *Server) configureStore() error {

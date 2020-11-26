@@ -1,12 +1,17 @@
 APP = acg
 
+FLGS = -v
 .PHONY: build
 build:
-	go build -v ./cmd/$(APP)
+	go build $(FLGS) ./cmd/$(APP)
 
 .PHONY: run
 run:
-	go run -v ./cmd/$(APP)
+	go run $(FLGS) ./cmd/$(APP)
+
+.PHOTY: buildnrace
+buildnrace:
+	go build $(FLGS) -race ./cmd/$(APP)
 
 
 DBPORT = 27017

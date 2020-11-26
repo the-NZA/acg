@@ -71,3 +71,70 @@ func (s *Server) handleCreatePage() http.HandlerFunc {
 		w.Write(js)
 	}
 }
+
+func (s *Server) handleUpdatePage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		np := &models.Page{}
+
+		err := json.NewDecoder(r.Body).Decode(np)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		js, err := json.Marshal(np)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var bs bson.D
+		err = bson.UnmarshalExtJSON([]byte(js), true, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		bsm := bs.Map()
+		if _, exist := bsm["_id"]; exist {
+			delete(bsm, "_id")
+		}
+
+		js, err = json.Marshal(bsm)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		err = bson.UnmarshalExtJSON([]byte(js), true, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res, err := s.store.UpdateOne("pages", bson.M{"_id": np.ID}, bs)
+
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if res.UpsertedID == nil {
+			js, err = json.Marshal(np.ID)
+			if err != nil {
+				s.logger.Error(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+	}
+}

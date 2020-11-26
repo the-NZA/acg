@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/the-NZA/acg/internal/app/store/models"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 var tpl *template.Template
@@ -16,22 +17,46 @@ func init() {
 // Homepage
 func (s *Server) handleHomePage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := models.Page{
-			Title:    "Добро пожаловать, пожаловать добро!",
-			MetaDesc: "This is awesome mock description",
+		// s.logger.Printf("Host %s, Path %s\n", r.Host, r.URL.Path)
+		m := models.Page{}
+
+		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		bsb, err := bson.Marshal(bs)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+		}
+
+		err = bson.Unmarshal(bsb, &m)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
 		tpl.ExecuteTemplate(w, "index.gohtml", &m)
 	}
-
 }
 
 // Posts page
 func (s *Server) handlePostsPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := models.Page{
-			Title:    "Новости и публикации",
-			MetaDesc: "Здесь вы найдете новые публикации и новостные сводки от нашей команды.",
+		m := models.Page{}
+
+		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		bsb, err := bson.Marshal(bs)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+		}
+
+		err = bson.Unmarshal(bsb, &m)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
 		tpl.ExecuteTemplate(w, "posts.gohtml", &m)
@@ -41,22 +66,45 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 // Services page
 func (s *Server) handleServicesPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := models.Page{
-			Title:    "Наши услуги",
-			MetaDesc: "Весь спектр услуг представлен в удобном виде",
+		m := models.Page{}
+
+		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		bsb, err := bson.Marshal(bs)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+		}
+
+		err = bson.Unmarshal(bsb, &m)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
 		tpl.ExecuteTemplate(w, "services.gohtml", &m)
 	}
-
 }
 
 // Materials page
 func (s *Server) handleMaterialsPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := models.Page{
-			Title:    "Материалы и обсуждение",
-			MetaDesc: "Здесь вы найдете выборку и примеры готовых файлов по нужным тематикам",
+		m := models.Page{}
+
+		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		bsb, err := bson.Marshal(bs)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+		}
+
+		err = bson.Unmarshal(bsb, &m)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
 		tpl.ExecuteTemplate(w, "materials.gohtml", &m)
@@ -66,9 +114,21 @@ func (s *Server) handleMaterialsPage() http.HandlerFunc {
 // About page
 func (s *Server) handleAboutPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := models.Page{
-			Title:    "О компании",
-			MetaDesc: "Вся информация о нашей компании может быть найдена здесь",
+		m := models.Page{}
+
+		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		bsb, err := bson.Marshal(bs)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+		}
+
+		err = bson.Unmarshal(bsb, &m)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
 		tpl.ExecuteTemplate(w, "singlepage.gohtml", &m)
@@ -78,9 +138,21 @@ func (s *Server) handleAboutPage() http.HandlerFunc {
 // Contacts page
 func (s *Server) handleContactsPage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m := models.Page{
-			Title:    "Контакты",
-			MetaDesc: "Подробная информация о способах связи с нами",
+		m := models.Page{}
+
+		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		bsb, err := bson.Marshal(bs)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+		}
+
+		err = bson.Unmarshal(bsb, &m)
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
 		tpl.ExecuteTemplate(w, "singlepage.gohtml", &m)
