@@ -1,4 +1,4 @@
-{{template "header" .}}
+{{template "header" .Page}}
 	<main class="home__main">
 		<section class="home_hero">
 			<div class="home_hero__container">
@@ -92,91 +92,41 @@
 				</p>
 			</div>
 			<div class="homeservices__cards">
+			{{range .Services}}
 				<div class="homeservices_card">
 					<div class="homeservices_card__img">
-						<a href="#">
-							<img class="homeservices_card__icon" src="img/servicon.svg" alt="homeservice icon">
+						<a href="/services">
+							<img class="homeservices_card__icon" src="{{.Img.URL}}" alt="{{.Img.Alt}}">
 						</a>
 					</div>
 					<h3 class="homeservices_card__title">
-						<a href="#">Lorem ipsum dolor sit amet.</a>
+						<a href="/services">{{.Title}}</a>
 					</h3>
 					<div class="homeservices_card__description">
-						Lorem ipsum dolor sit amet, consectetur adipisicing elit. Lorem, ipsum dolor. Lorem ipsum dolor .
-						<span class="homeservices_card__icon"></span>
+						{{.Subtitle}}
+						<!-- <span class="homeservices_card__icon"></span> -->
 					</div>
 				</div>
-				<div class="homeservices_card">
-					<div class="homeservices_card__img">
-						<a href="#">
-							<img class="homeservices_card__icon" src="img/servicon.svg" alt="homeservice icon">
-						</a>
-					</div>
-					<h3 class="homeservices_card__title">
-						<a href="#">Lorem ipsum dolor sit amet.</a>
-					</h3>
-					<div class="homeservices_card__description">
-						Lorem ipsum dolor sit amet, consectetur adipisicing elit. Lorem, ipsum dolor. Lorem ipsum dolor .
-						<span class="homeservices_card__icon"></span>
-					</div>
-				</div>
-				<div class="homeservices_card">
-					<div class="homeservices_card__img">
-						<a href="#">
-							<img class="homeservices_card__icon" src="img/servicon.svg" alt="homeservice icon">
-						</a>
-					</div>
-					<h3 class="homeservices_card__title">
-						<a href="#">Lorem ipsum dolor sit amet.</a>
-					</h3>
-					<div class="homeservices_card__description">
-						Lorem ipsum dolor sit amet, consectetur adipisicing elit. Lorem, ipsum dolor. Lorem ipsum dolor .
-						<span class="homeservices_card__icon"></span>
-					</div>
-				</div>
-				<div class="homeservices_card">
-					<div class="homeservices_card__img">
-						<a href="#">
-							<img class="homeservices_card__icon" src="img/servicon.svg" alt="homeservice icon">
-						</a>
-					</div>
-					<h3 class="homeservices_card__title">
-						<a href="#">Lorem ipsum dolor sit amet.</a>
-					</h3>
-					<div class="homeservices_card__description">
-						Lorem ipsum dolor sit amet, consectetur adipisicing elit. Lorem, ipsum dolor. Lorem ipsum dolor .
-						<span class="homeservices_card__icon"></span>
-					</div>
-				</div>
-				<div class="homeservices_card">
-					<div class="homeservices_card__img">
-						<a href="#">
-							<img class="homeservices_card__icon" src="img/servicon.svg" alt="homeservice icon">
-						</a>
-					</div>
-					<h3 class="homeservices_card__title">
-						<a href="#">Lorem ipsum dolor sit amet.</a>
-					</h3>
-					<div class="homeservices_card__description">
-						Lorem ipsum dolor sit amet, consectetur adipisicing elit. Lorem, ipsum dolor. Lorem ipsum dolor .
-						<span class="homeservices_card__icon"></span>
-					</div>
-				</div>
-				<div class="homeservices_card">
-					<div class="homeservices_card__img">
-						<a href="#">
-							<img class="homeservices_card__icon" src="img/servicon.svg" alt="homeservice icon">
-						</a>
-					</div>
-					<h3 class="homeservices_card__title">
-						<a href="#">Lorem ipsum dolor sit amet.</a>
-					</h3>
-					<div class="homeservices_card__description">
-						Lorem ipsum dolor sit amet, consectetur adipisicing elit. Lorem, ipsum dolor. Lorem ipsum dolor .
-						<span class="homeservices_card__icon"></span>
-					</div>
-				</div>
+			{{end}}
 			</div>
 		</section>
 	</main>
 {{template "footer"}}
+
+
+<!--
+EXAMPLE OF SERVICE CARD
+<div class="homeservices_card">
+	<div class="homeservices_card__img">
+		<a href="#">
+			<img class="homeservices_card__icon" src="img/servicon.svg" alt="homeservice icon">
+		</a>
+	</div>
+	<h3 class="homeservices_card__title">
+		<a href="#">Lorem ipsum dolor sit amet.</a>
+	</h3>
+	<div class="homeservices_card__description">
+		Lorem ipsum dolor sit amet, consectetur adipisicing elit. Lorem, ipsum dolor. Lorem ipsum dolor .
+		<span class="homeservices_card__icon"></span>
+	</div>
+</div> -->

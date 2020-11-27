@@ -10,15 +10,15 @@
 	</div>
 	<section class="services">
 		<div class="services__cards">
-			{{ range .Services}}
-				<div class="service_card">
-					<div class="service_card__img">
-						<img src="{{.Img.URL}}" alt="{{.Img.Alt}}">
-					</div>
-					<h3 class="service_card__title">{{.Title}}</h3>
-					<div class="service_card__description">{{.Desc}}</div>
+		{{ range .Services}}
+			<div class="service_card">
+				<div class="service_card__img">
+					<img src="{{.Img.URL}}" alt="{{.Img.Alt}}">
 				</div>
-			{{end}}
+				<h3 class="service_card__title">{{.Title}}</h3>
+				<div class="service_card__description">{{.Desc}}</div>
+			</div>
+		{{end}}
 		</div>
 	</section>
 </main>

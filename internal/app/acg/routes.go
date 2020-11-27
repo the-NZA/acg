@@ -16,11 +16,21 @@ func init() {
 
 // Homepage
 func (s *Server) handleHomePage() http.HandlerFunc {
+	type homepage struct {
+		Page     models.Page
+		Services []models.Service
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		// s.logger.Printf("Host %s, Path %s\n", r.Host, r.URL.Path)
 		m := models.Page{}
+		srv := make([]models.Service, 0)
 
 		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		srv, err = s.store.FindAllServices()
 		if err != nil {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
@@ -35,7 +45,9 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
-		tpl.ExecuteTemplate(w, "index.gohtml", &m)
+		homeContent := &homepage{m, srv}
+
+		tpl.ExecuteTemplate(w, "index.gohtml", homeContent)
 	}
 }
 
