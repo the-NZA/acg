@@ -137,3 +137,59 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 		w.Write(bsbytes)
 	}
 }
+
+/*
+ * Services Handlers for GET, POST and UPDATE
+ */
+func (s *Server) handleCreateService() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ns := &models.Service{
+			ID: primitive.NewObjectID(),
+		}
+
+		err := json.NewDecoder(r.Body).Decode(ns)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res, err := s.store.InsertOne("services", ns)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		js, err := json.Marshal(res.InsertedID)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+	}
+}
+
+func (s *Server) handleGetServices() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		services, err := s.store.FindAllServices()
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		sjs, err := json.Marshal(services)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(sjs)
+	}
+}

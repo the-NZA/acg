@@ -65,10 +65,21 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 
 // Services page
 func (s *Server) handleServicesPage() http.HandlerFunc {
+	type services struct {
+		Page     models.Page
+		Services []models.Service
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := models.Page{}
+		srv := make([]models.Service, 0)
 
 		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		srv, err = s.store.FindAllServices()
 		if err != nil {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
@@ -83,7 +94,9 @@ func (s *Server) handleServicesPage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
-		tpl.ExecuteTemplate(w, "services.gohtml", &m)
+		pageContect := &services{m, srv}
+
+		tpl.ExecuteTemplate(w, "services.gohtml", pageContect)
 	}
 }
 

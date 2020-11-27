@@ -61,9 +61,13 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/contacts", s.handleContactsPage())
 
 	// Pages API routes
-	s.router.HandleFunc("/pages", s.handleGetPages()).Methods("GET")
-	s.router.HandleFunc("/pages", s.handleCreatePage()).Methods("POST")
-	s.router.HandleFunc("/pages", s.handleUpdatePage()).Methods("PUT")
+	s.router.HandleFunc("/api/pages", s.handleGetPages()).Methods("GET")
+	s.router.HandleFunc("/api/pages", s.handleCreatePage()).Methods("POST")
+	s.router.HandleFunc("/api/pages", s.handleUpdatePage()).Methods("PUT")
+
+	// Services API routes
+	s.router.HandleFunc("/api/services", s.handleGetServices()).Methods("GET")
+	s.router.HandleFunc("/api/services", s.handleCreateService()).Methods("POST")
 
 	// Static files
 	// TODO: Deliver this to NGINX later, with proxy and ssl

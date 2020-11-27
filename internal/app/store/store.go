@@ -118,6 +118,29 @@ func (s *Store) FindAllPages() ([]models.Page, error) {
 	return pages, nil
 }
 
+// FindAllServices returns slice of pages and error
+func (s *Store) FindAllServices() ([]models.Service, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := s.db.Database(dbName)
+	col := db.Collection("services")
+	cur, err := col.Find(ctx, bson.M{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	services := make([]models.Service, 0)
+
+	err = cur.All(ctx, &services)
+	if err != nil {
+		return nil, err
+	}
+
+	return services, nil
+}
+
 // InsertOne add data to collection
 func (s *Store) InsertOne(collection string, data interface{}) (*mongo.InsertOneResult, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
