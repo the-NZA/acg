@@ -8,7 +8,17 @@
 	</div>
 
 	<section class="singlepage__content about__content">
-		<p class="singlepage__text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Nihil impedit quod vero
+		{{ $blocks := .PageData }}
+		{{range $block := $blocks}}
+			{{ if eq $block.Type "paragraph" }}
+				<p class="singlepage__text">
+					{{ $block.Data.Text }}
+				</p>
+			{{ else if eq $block.Type "image"}}
+				<img src="{{ $block.Data.File.URL }}" alt="Photo Must be there" class="singlepage__img">
+			{{ end }}
+		{{end}}
+		<!-- <p class="singlepage__text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Nihil impedit quod vero
 			facilis eum cumque accusamus, asperiores quos magnam optio fugiat distinctio delectus necessitatibus nulla,
 			minima ab modi eos maiores voluptatibus odit odio expedita hic quidem deserunt? Id perferendis laboriosam,
 			fuga consequatur sit ad soluta commodi culpa aperiam repellendus! Quisquam, praesentium reprehenderit nemo
@@ -68,7 +78,7 @@
 			natus impedit nulla vero obcaecati reprehenderit alias error sint fuga distinctio dolore! Incidunt culpa
 			eaque eos? Consequatur quaerat praesentium facilis voluptatibus sapiente nemo ad necessitatibus itaque nam
 			laudantium! Iusto laudantium omnis consectetur ea, tenetur tempora voluptatum accusantium! Nisi facere,
-			aliquid, culpa unde aperiam fuga illum vitae rerum debitis sequi a voluptas?</p>
+			aliquid, culpa unde aperiam fuga illum vitae rerum debitis sequi a voluptas?</p> -->
 	</section>
 </main>
 {{template "footer"}}

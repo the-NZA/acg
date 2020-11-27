@@ -9,26 +9,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Pages Handlers for GET, POST and UPDATE
+/*
+ * Pages Handlers for GET, POST and UPDATE
+ */
 func (s *Server) handleGetPages() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := s.store.FindAll("pages")
+		pages, err := s.store.FindAllPages()
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		pages := []models.Page{}
-		curItem := models.Page{}
-
-		for _, v := range data {
-			bsonBytes, _ := bson.Marshal(v)
-			bson.Unmarshal(bsonBytes, &curItem)
-			pages = append(pages, curItem)
-		}
-
-		bytes, err := json.Marshal(pages)
+		pjs, err := json.Marshal(pages)
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -36,7 +29,7 @@ func (s *Server) handleGetPages() http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
+		w.Write(pjs)
 	}
 }
 
@@ -83,42 +76,48 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 			return
 		}
 
-		js, err := json.Marshal(np)
+		// js, err := json.Marshal(np)
+		// if err != nil {
+		// 	s.logger.Error(err)
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+
+		bsbytes, err := bson.Marshal(np)
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		var bs bson.D
-		err = bson.UnmarshalExtJSON([]byte(js), true, &bs)
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		// err = bson.UnmarshalExtJSON([]byte(js), true, &bs)
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		bsm := bs.Map()
-		if _, exist := bsm["_id"]; exist {
-			delete(bsm, "_id")
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
 		}
 
-		js, err = json.Marshal(bsm)
-		if err != nil {
-			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// js, err = json.Marshal(bs)
+		// if err != nil {
+		// 	s.logger.Error(err)
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 
-		err = bson.UnmarshalExtJSON([]byte(js), true, &bs)
-		if err != nil {
-			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// err = bson.UnmarshalExtJSON([]byte(js), true, &bs)
+		// if err != nil {
+		// 	s.logger.Error(err)
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
 
 		res, err := s.store.UpdateOne("pages", bson.M{"_id": np.ID}, bs)
-
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -126,7 +125,7 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 		}
 
 		if res.UpsertedID == nil {
-			js, err = json.Marshal(np.ID)
+			bsbytes, err = json.Marshal(np.ID)
 			if err != nil {
 				s.logger.Error(err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -135,6 +134,6 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(js)
+		w.Write(bsbytes)
 	}
 }
