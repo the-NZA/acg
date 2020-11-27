@@ -12,6 +12,7 @@ import (
 /*
  * Pages Handlers for GET, POST and UPDATE
  */
+// Handle GET on /pages
 func (s *Server) handleGetPages() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pages, err := s.store.FindAllPages()
@@ -33,6 +34,7 @@ func (s *Server) handleGetPages() http.HandlerFunc {
 	}
 }
 
+// Handle POST on /pages
 func (s *Server) handleCreatePage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		np := &models.Page{
@@ -65,6 +67,7 @@ func (s *Server) handleCreatePage() http.HandlerFunc {
 	}
 }
 
+// Handle PUT on /pages
 func (s *Server) handleUpdatePage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		np := &models.Page{}
@@ -141,6 +144,7 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 /*
  * Services Handlers for GET, POST and UPDATE
  */
+// Handle POST on /services
 func (s *Server) handleCreateService() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ns := &models.Service{
@@ -173,6 +177,7 @@ func (s *Server) handleCreateService() http.HandlerFunc {
 	}
 }
 
+// Handle GET on /services
 func (s *Server) handleGetServices() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		services, err := s.store.FindAllServices()
@@ -191,5 +196,57 @@ func (s *Server) handleGetServices() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(sjs)
+	}
+}
+
+// Handle PUT on /services
+func (s *Server) handleUpdateService() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ns := &models.Service{}
+
+		err := json.NewDecoder(r.Body).Decode(ns)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		bsbytes, err := bson.Marshal(ns)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		res, err := s.store.UpdateOne("services", bson.M{"_id": ns.ID}, bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if res.UpsertedID == nil {
+			bsbytes, err = json.Marshal(ns.ID)
+			if err != nil {
+				s.logger.Error(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(bsbytes)
 	}
 }
