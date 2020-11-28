@@ -1,13 +1,7 @@
 {{template "header" .Page}}
 <main class="services__main">
-	<div class="pages__title">
-		<h1 class=" pages__header services__header">
-			{{.Page.Title}}
-		</h1>
-		<p class="pages__subheader">
-			{{.Page.Subtitle}}
-		</p>
-	</div>
+	{{template "page_title" .Page}}
+
 	<section class="services">
 		<div class="services__cards">
 		{{ range .Services}}

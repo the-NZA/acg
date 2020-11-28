@@ -1,14 +1,7 @@
 {{template "header" .}}
 	<div class="materials">
-		<div class="pages__title">
-			<h1 class=" pages__header">
-				{{.Title}}
-			</h1>
-			<p class="pages__subheader">
-				{{.Subtitle}}
-			</p>
-		</div>
-	
+		{{template "page_title" .}}
+
 		<div class="materials__container">
 	
 			<aside class="materials__aside">

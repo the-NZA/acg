@@ -1,9 +1,6 @@
 {{template "header" .}}
 <main class="singlepage__main about__main">
-	<div class="pages__title">
-		<h1 class=" pages__header">{{.Title}}</h1>
-		<p class="pages__subheader">{{.Subtitle}}</p>
-	</div>
+	{{template "page_title" .}}
 
 	<section class="singlepage__content about__content">
 		{{ $blocks := .PageData }}
