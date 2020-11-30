@@ -285,6 +285,8 @@ func (s *Server) handleCreatePost() http.HandlerFunc {
 			Time: time.Now(),
 		}
 
+		np.TimeString = np.Time.Format("02.01.2006")
+
 		err := json.NewDecoder(r.Body).Decode(np)
 		if err != nil {
 			s.logger.Error(err)

@@ -2,3 +2,4 @@
 config/acg.json
 mongodata
 static
+.DS_Store

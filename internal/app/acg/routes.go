@@ -20,6 +20,7 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 		Page     models.Page
 		Services []models.Service
 	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		// s.logger.Printf("Host %s, Path %s\n", r.Host, r.URL.Path)
 		m := models.Page{}
@@ -53,10 +54,26 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 
 // Posts page
 func (s *Server) handlePostsPage() http.HandlerFunc {
+	type postspage struct {
+		Page       models.Page
+		Posts      []models.Post
+		Categories []models.Category
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := models.Page{}
 
 		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		psts, err := s.store.FindAllPosts()
+		if err != nil {
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		cats, err := s.store.FindAllCategories()
 		if err != nil {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
@@ -71,7 +88,13 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
-		tpl.ExecuteTemplate(w, "posts.gohtml", &m)
+		postsContent := &postspage{
+			Page:       m,
+			Posts:      psts,
+			Categories: cats,
+		}
+
+		tpl.ExecuteTemplate(w, "posts.gohtml", postsContent)
 	}
 }
 
