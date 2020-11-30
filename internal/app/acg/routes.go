@@ -6,6 +6,7 @@ import (
 
 	"github.com/the-NZA/acg/internal/app/store/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var tpl *template.Template
@@ -19,6 +20,7 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 	type homepage struct {
 		Page     models.Page
 		Services []models.Service
+		Posts    []models.Post
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +38,10 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
 
+		findOptions := options.Find()
+		findOptions.SetLimit(3)
+		psts, err := s.store.FindAllPosts(findOptions)
+
 		bsb, err := bson.Marshal(bs)
 		if err != nil {
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
@@ -46,7 +52,7 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
-		homeContent := &homepage{m, srv}
+		homeContent := &homepage{m, srv, psts}
 
 		tpl.ExecuteTemplate(w, "index.gohtml", homeContent)
 	}
@@ -73,7 +79,7 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
 
-		cats, err := s.store.FindAllCategories()
+		cats, err := s.store.FindAllCategories(bson.M{})
 		if err != nil {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}

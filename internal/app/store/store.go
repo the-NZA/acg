@@ -142,13 +142,13 @@ func (s *Store) FindAllServices() ([]models.Service, error) {
 }
 
 // FindAllCategories returns slice of pages and error
-func (s *Store) FindAllCategories() ([]models.Category, error) {
+func (s *Store) FindAllCategories(filter bson.M) ([]models.Category, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db := s.db.Database(dbName)
 	col := db.Collection("categories")
-	cur, err := col.Find(ctx, bson.M{})
+	cur, err := col.Find(ctx, filter)
 
 	if err != nil {
 		return nil, err
@@ -165,13 +165,13 @@ func (s *Store) FindAllCategories() ([]models.Category, error) {
 }
 
 // FindAllPosts returns slice of pages and error
-func (s *Store) FindAllPosts() ([]models.Post, error) {
+func (s *Store) FindAllPosts(opts ...*options.FindOptions) ([]models.Post, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db := s.db.Database(dbName)
 	col := db.Collection("posts")
-	cur, err := col.Find(ctx, bson.M{})
+	cur, err := col.Find(ctx, bson.M{}, opts...)
 
 	if err != nil {
 		return nil, err

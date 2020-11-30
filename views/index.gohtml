@@ -7,8 +7,8 @@
 					<h1 class="hero_content__header">we guarantee you the best service</h1>
 					<p class="hero_content__text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet consectetur.</p>
 					
-					<a href="#" class="hero_content__btn">О компании</a>
-					<a href="#" class="hero_content__btn hero_content__btn-dif">Наши услуги</a>
+					<a href="/about" class="hero_content__btn">О компании</a>
+					<a href="/services" class="hero_content__btn hero_content__btn-dif">Наши услуги</a>
 				</div>
 
 				<div class="home_hero__icon">
@@ -30,55 +30,27 @@
 				<a class="new_posts__link" href="/posts">Все публикации &rarr;</a>
 			</div>
 			<div class="new_posts__container">
+			{{range .Posts}}
 				<div class="post_card post_card--home">
 					<div class="post_card__image">
+						{{if .PostImg}}
+							<img src="{{.PostImg}}" alt="{{.Title}}">
+						{{end}}
 					</div>
 					<div class="post_card__content">
 						<h4 class="post_card__title">
-							Post number 1
+							{{.Title}}
 						</h4>
 						<p class="post_card__text">
-							Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquid voluptatibus ipsum soluta at, repellendus et assumenda pariatur nulla autem eum magni sint consequatur libero non, consequuntur eius iste, modi laudantium!
+							{{.Excerpt}}
 						</p>
-
 						<div class="post_card__footer">
-							<a href="/singlepost.html" class="post_card__btn">Читать</a>
-							<p class="post_card__date">22.10.2020</p>
+							<a href="{{.CategoryURL}}{{.URL}}" class="post_card__btn">Читать</a>
+							<p class="post_card__date">{{.TimeString}}</p>
 						</div>
 					</div>
 				</div>
-				<div class="post_card post_card--home">
-					<div class="post_card__image">
-					</div>
-					<div class="post_card__content">
-						<h4 class="post_card__title">
-							Post number 1
-						</h4>
-						<p class="post_card__text">
-							Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquid voluptatibus ipsum soluta at, repellendus et assumenda pariatur nulla autem eum magni sint consequatur libero non, consequuntur eius iste, modi laudantium!
-						</p>
-						<div class="post_card__footer">
-							<a href="/singlepost.html" class="post_card__btn">Читать</a>
-							<p class="post_card__date">22.10.2020</p>
-						</div>
-					</div>
-				</div>
-				<div class="post_card post_card--home">
-					<div class="post_card__image">
-					</div>
-					<div class="post_card__content">
-						<h4 class="post_card__title">
-							Post number 1
-						</h4>
-						<p class="post_card__text">
-							Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquid voluptatibus ipsum soluta at, repellendus et assumenda pariatur nulla autem eum magni sint consequatur libero non, consequuntur eius iste, modi laudantium!
-						</p>
-						<div class="post_card__footer">
-							<a href="/singlepost.html" class="post_card__btn">Читать</a>
-							<p class="post_card__date">22.10.2020</p>
-						</div>
-					</div>
-				</div>
+			{{end}}
 			</div>
 		</section>
 
@@ -130,3 +102,21 @@ EXAMPLE OF SERVICE CARD
 		<span class="homeservices_card__icon"></span>
 	</div>
 </div> -->
+<!--
+EXAMPLE OF HOME POST CARD
+<div class="post_card post_card--home">
+	<div class="post_card__image">
+	</div>
+	<div class="post_card__content">
+		<h4 class="post_card__title">
+			Post number 1
+		</h4>
+		<p class="post_card__text">
+			Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aliquid voluptatibus ipsum soluta at, repellendus et assumenda pariatur nulla autem eum magni sint consequatur libero non, consequuntur eius iste, modi laudantium!
+		</p>
+		<div class="post_card__footer">
+			<a href="/singlepost.html" class="post_card__btn">Читать</a>
+			<p class="post_card__date">22.10.2020</p>
+		</div>
+	</div>
+</div> --> 

@@ -373,7 +373,7 @@ func (s *Server) handleUpdatePost() http.HandlerFunc {
 // Handel GET all categories on /categories
 func (s *Server) handleGetCatigories() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cats, err := s.store.FindAllCategories()
+		cats, err := s.store.FindAllCategories(bson.M{})
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
