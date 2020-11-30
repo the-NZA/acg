@@ -70,6 +70,16 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/services", s.handleCreateService()).Methods("POST")
 	s.router.HandleFunc("/api/services", s.handleUpdateService()).Methods("PUT")
 
+	// Posts API routes
+	s.router.HandleFunc("/api/posts", s.handleGetPosts()).Methods("GET")
+	s.router.HandleFunc("/api/posts", s.handleCreatePost()).Methods("POST")
+	s.router.HandleFunc("/api/posts", s.handleUpdatePost()).Methods("PUT")
+
+	// Posts API routes
+	s.router.HandleFunc("/api/categories", s.handleGetCatigories()).Methods("GET")
+	s.router.HandleFunc("/api/categories", s.handleCreateCategory()).Methods("POST")
+	s.router.HandleFunc("/api/categories", s.handleUpdateCategory()).Methods("PUT")
+
 	// Static files
 	// TODO: Deliver this to NGINX later, with proxy and ssl
 	s.router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))

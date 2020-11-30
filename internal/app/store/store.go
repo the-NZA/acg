@@ -141,6 +141,52 @@ func (s *Store) FindAllServices() ([]models.Service, error) {
 	return services, nil
 }
 
+// FindAllCategories returns slice of pages and error
+func (s *Store) FindAllCategories() ([]models.Category, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := s.db.Database(dbName)
+	col := db.Collection("categories")
+	cur, err := col.Find(ctx, bson.M{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	cats := make([]models.Category, 0)
+
+	err = cur.All(ctx, &cats)
+	if err != nil {
+		return nil, err
+	}
+
+	return cats, nil
+}
+
+// FindAllPosts returns slice of pages and error
+func (s *Store) FindAllPosts() ([]models.Category, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := s.db.Database(dbName)
+	col := db.Collection("posts")
+	cur, err := col.Find(ctx, bson.M{})
+
+	if err != nil {
+		return nil, err
+	}
+
+	posts := make([]models.Category, 0)
+
+	err = cur.All(ctx, &posts)
+	if err != nil {
+		return nil, err
+	}
+
+	return posts, nil
+}
+
 // InsertOne add data to collection
 func (s *Store) InsertOne(collection string, data interface{}) (*mongo.InsertOneResult, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)

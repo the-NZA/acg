@@ -250,3 +250,149 @@ func (s *Server) handleUpdateService() http.HandlerFunc {
 		w.Write(bsbytes)
 	}
 }
+
+/*
+* Posts Handlers for CRUD operations
+ */
+// Handel GET all posts on /posts
+func (s *Server) handleGetPosts() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		posts, err := s.store.FindAllCategories()
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		pjs, err := json.Marshal(posts)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(pjs)
+	}
+}
+
+// Handle POST on /posts
+func (s *Server) handleCreatePost() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {}
+}
+
+// Handle PUT on /posts
+func (s *Server) handleUpdatePost() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {}
+}
+
+/*
+* Categories Handlers for CRUD operations
+ */
+// Handel GET all categories on /categories
+func (s *Server) handleGetCatigories() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cats, err := s.store.FindAllCategories()
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		pjs, err := json.Marshal(cats)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(pjs)
+	}
+
+}
+
+// Handle POST on /categories
+func (s *Server) handleCreateCategory() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		np := &models.Category{
+			ID: primitive.NewObjectID(),
+		}
+
+		err := json.NewDecoder(r.Body).Decode(np)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res, err := s.store.InsertOne("categories", np)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		js, err := json.Marshal(res.InsertedID)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+	}
+}
+
+// Handle PUT on /categories
+func (s *Server) handleUpdateCategory() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nc := &models.Category{}
+
+		err := json.NewDecoder(r.Body).Decode(nc)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		bsbytes, err := bson.Marshal(nc)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		res, err := s.store.UpdateOne("categories", bson.M{"_id": nc.ID}, bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if res.UpsertedID == nil {
+			bsbytes, err = json.Marshal(nc.ID)
+			if err != nil {
+				s.logger.Error(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(bsbytes)
+	}
+}
