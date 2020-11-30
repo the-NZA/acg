@@ -3,6 +3,7 @@ package acg
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/the-NZA/acg/internal/app/store/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -120,7 +121,7 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 		// 	return
 		// }
 
-		res, err := s.store.UpdateOne("pages", bson.M{"_id": np.ID}, bs)
+		res, err := s.store.UpdateOne("pages", bson.M{"_id": np.ID}, bson.M{"$set": bs})
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -230,7 +231,7 @@ func (s *Server) handleUpdateService() http.HandlerFunc {
 			delete(bs, "_id")
 		}
 
-		res, err := s.store.UpdateOne("services", bson.M{"_id": ns.ID}, bs)
+		res, err := s.store.UpdateOne("services", bson.M{"_id": ns.ID}, bson.M{"$set": bs})
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -257,7 +258,7 @@ func (s *Server) handleUpdateService() http.HandlerFunc {
 // Handel GET all posts on /posts
 func (s *Server) handleGetPosts() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		posts, err := s.store.FindAllCategories()
+		posts, err := s.store.FindAllPosts()
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -278,12 +279,90 @@ func (s *Server) handleGetPosts() http.HandlerFunc {
 
 // Handle POST on /posts
 func (s *Server) handleCreatePost() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {}
+	return func(w http.ResponseWriter, r *http.Request) {
+		np := &models.Post{
+			ID:   primitive.NewObjectID(),
+			Time: time.Now(),
+		}
+
+		err := json.NewDecoder(r.Body).Decode(np)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res, err := s.store.InsertOne("posts", np)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		s.store.UpdateOne("categories", bson.M{"title": np.Category}, bson.M{"$push": bson.M{"posts": np}})
+
+		js, err := json.Marshal(res.InsertedID)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+	}
 }
 
 // Handle PUT on /posts
 func (s *Server) handleUpdatePost() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {}
+	return func(w http.ResponseWriter, r *http.Request) {
+		nc := &models.Post{}
+
+		err := json.NewDecoder(r.Body).Decode(nc)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		bsbytes, err := bson.Marshal(nc)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		res, err := s.store.UpdateOne("posts", bson.M{"_id": nc.ID}, bson.M{"$set": bs})
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if res.UpsertedID == nil {
+			bsbytes, err = json.Marshal(nc.ID)
+			if err != nil {
+				s.logger.Error(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(bsbytes)
+	}
 }
 
 /*
@@ -309,7 +388,6 @@ func (s *Server) handleGetCatigories() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(pjs)
 	}
-
 }
 
 // Handle POST on /categories
@@ -376,7 +454,7 @@ func (s *Server) handleUpdateCategory() http.HandlerFunc {
 			delete(bs, "_id")
 		}
 
-		res, err := s.store.UpdateOne("categories", bson.M{"_id": nc.ID}, bs)
+		res, err := s.store.UpdateOne("categories", bson.M{"_id": nc.ID}, bson.M{"$set": bs})
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -165,7 +165,7 @@ func (s *Store) FindAllCategories() ([]models.Category, error) {
 }
 
 // FindAllPosts returns slice of pages and error
-func (s *Store) FindAllPosts() ([]models.Category, error) {
+func (s *Store) FindAllPosts() ([]models.Post, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -177,7 +177,7 @@ func (s *Store) FindAllPosts() ([]models.Category, error) {
 		return nil, err
 	}
 
-	posts := make([]models.Category, 0)
+	posts := make([]models.Post, 0)
 
 	err = cur.All(ctx, &posts)
 	if err != nil {
@@ -215,9 +215,7 @@ func (s *Store) UpdateOne(collection string, filter interface{}, update interfac
 	r, err := col.UpdateOne(
 		ctx,
 		filter,
-		bson.M{
-			"$set": update,
-		},
+		update,
 	)
 
 	if err != nil {
