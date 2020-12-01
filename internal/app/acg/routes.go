@@ -40,6 +40,7 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 
 		findOptions := options.Find()
 		findOptions.SetLimit(3)
+		findOptions.SetSort(bson.M{"time": -1})
 		psts, err := s.store.FindAllPosts(findOptions)
 
 		bsb, err := bson.Marshal(bs)
@@ -74,10 +75,16 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
 
-		psts, err := s.store.FindAllPosts()
+		findOptions := options.Find()
+		findOptions.SetLimit(1)
+		findOptions.SetSort(bson.M{"time": -1})
+		psts, err := s.store.FindAllPosts(findOptions)
 		if err != nil {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
+
+		pstsCnt, err := s.store.CountAllPosts()
+		s.logger.Info(pstsCnt)
 
 		cats, err := s.store.FindAllCategories(bson.M{})
 		if err != nil {

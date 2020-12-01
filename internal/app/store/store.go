@@ -187,6 +187,26 @@ func (s *Store) FindAllPosts(opts ...*options.FindOptions) ([]models.Post, error
 	return posts, nil
 }
 
+// CountAllPosts returns slice of pages and error
+func (s *Store) CountAllPosts(opts ...*options.CountOptions) (int64, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := s.db.Database(dbName)
+	col := db.Collection("posts")
+	cnt, err := col.CountDocuments(ctx, bson.M{}, opts...)
+
+	if err != nil {
+		return -1, err
+	}
+
+	if err != nil {
+		return -1, err
+	}
+
+	return cnt, nil
+}
+
 // InsertOne add data to collection
 func (s *Store) InsertOne(collection string, data interface{}) (*mongo.InsertOneResult, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
