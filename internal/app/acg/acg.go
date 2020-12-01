@@ -56,6 +56,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/", s.handleHomePage())
 	s.router.HandleFunc("/materials", s.handleMaterialsPage())
 	s.router.HandleFunc("/posts", s.handlePostsPage())
+	s.router.HandleFunc("/posts/{page}", s.handlePostsPage())
 	s.router.HandleFunc("/services", s.handleServicesPage())
 	s.router.HandleFunc("/about", s.handleAboutPage())
 	s.router.HandleFunc("/contacts", s.handleContactsPage())

@@ -3,13 +3,24 @@ package acg
 import (
 	"html/template"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/the-NZA/acg/internal/app/store/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var tpl *template.Template
+var pstsPerPage int64 = 1 // Number of posts per each page
+
+// postspage represent struct for each page, which show posts
+type postspage struct {
+	Page       models.Page
+	Posts      []models.Post
+	Categories []models.Category
+	Pagination interface{}
+}
 
 func init() {
 	tpl = template.Must(template.ParseGlob("views/*.gohtml"))
@@ -61,43 +72,71 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 
 // Posts page
 func (s *Server) handlePostsPage() http.HandlerFunc {
-	type postspage struct {
-		Page       models.Page
-		Posts      []models.Post
-		Categories []models.Category
+	type pagination struct {
+		first string
+		last  string
+		next  string
+		prev  string
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := models.Page{}
+		vars := mux.Vars(r)
+		var pageNum int64
 
-		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
+		s.logger.Debug(vars)
+
+		bs, err := s.store.FindOne("pages", bson.M{"slug": "/posts"})
 		if err != nil {
+			s.logger.Info(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
+		}
+
+		if p, exist := vars["page"]; exist {
+			s.logger.Info(vars["page"])
+			pageNum, _ = strconv.ParseInt(p, 10, 64)
+		} else {
+			pageNum = 1
 		}
 
 		findOptions := options.Find()
-		findOptions.SetLimit(1)
+		findOptions.SetLimit(pstsPerPage)
 		findOptions.SetSort(bson.M{"time": -1})
+		findOptions.SetSkip((pageNum - 1) * pstsPerPage)
+
 		psts, err := s.store.FindAllPosts(findOptions)
 		if err != nil {
+			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
+			return
 		}
 
 		pstsCnt, err := s.store.CountAllPosts()
-		s.logger.Info(pstsCnt)
+		if err != nil {
+			s.logger.Error(err)
+		}
+
+		if pstsCnt < pstsPerPage*pageNum {
+			s.logger.Warn("triggered unexisting page")
+			http.Redirect(w, r, "/posts", http.StatusTemporaryRedirect)
+			return
+		}
 
 		cats, err := s.store.FindAllCategories(bson.M{})
 		if err != nil {
+			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
 
 		bsb, err := bson.Marshal(bs)
 		if err != nil {
+			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
 		err = bson.Unmarshal(bsb, &m)
 		if err != nil {
+			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
