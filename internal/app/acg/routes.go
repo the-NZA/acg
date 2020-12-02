@@ -2,6 +2,7 @@ package acg
 
 import (
 	"html/template"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -19,7 +20,7 @@ type postspage struct {
 	Page       models.Page
 	Posts      []models.Post
 	Categories []models.Category
-	Pagination interface{}
+	Pagination []string
 }
 
 func init() {
@@ -72,19 +73,10 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 
 // Posts page
 func (s *Server) handlePostsPage() http.HandlerFunc {
-	type pagination struct {
-		first string
-		last  string
-		next  string
-		prev  string
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := models.Page{}
 		vars := mux.Vars(r)
 		var pageNum int64
-
-		s.logger.Debug(vars)
 
 		bs, err := s.store.FindOne("pages", bson.M{"slug": "/posts"})
 		if err != nil {
@@ -92,13 +84,14 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 		}
 
+		// Parse mux url vars to get pageNum
 		if p, exist := vars["page"]; exist {
-			s.logger.Info(vars["page"])
 			pageNum, _ = strconv.ParseInt(p, 10, 64)
 		} else {
 			pageNum = 1
 		}
 
+		// Find options to deal with pagination
 		findOptions := options.Find()
 		findOptions.SetLimit(pstsPerPage)
 		findOptions.SetSort(bson.M{"time": -1})
@@ -116,11 +109,25 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 			s.logger.Error(err)
 		}
 
+		// Redirect to the first page if out of range
 		if pstsCnt < pstsPerPage*pageNum {
 			s.logger.Warn("triggered unexisting page")
 			http.Redirect(w, r, "/posts", http.StatusTemporaryRedirect)
 			return
 		}
+
+		// Cals number of pages
+		numOfPgs := math.Ceil(float64(pstsCnt) / float64(pstsPerPage))
+		s.logger.Info(numOfPgs)
+
+		// Create slice for representing pagination links
+		pagiArr := make([]string, int(numOfPgs))
+
+		for i := range pagiArr {
+			pagiArr[i] = "this is url " + strconv.Itoa(i)
+		}
+
+		s.logger.Info(pagiArr)
 
 		cats, err := s.store.FindAllCategories(bson.M{})
 		if err != nil {
@@ -139,6 +146,9 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
+
+		// Fix for active menu link
+		m.Slug = "/posts"
 
 		postsContent := &postspage{
 			Page:       m,

@@ -3,4 +3,6 @@ config/acg.json
 mongodata
 static
 .DS_Store
-last.vim
+*.vim
+docker-compose.yml
+etc

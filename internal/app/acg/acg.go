@@ -1,6 +1,7 @@
 package acg
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -52,6 +53,7 @@ func (s *Server) configureLogger() error {
 }
 
 func (s *Server) configureRouter() {
+
 	// Website routes
 	s.router.HandleFunc("/", s.handleHomePage())
 	s.router.HandleFunc("/materials", s.handleMaterialsPage())
@@ -81,9 +83,13 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/categories", s.handleCreateCategory()).Methods("POST")
 	s.router.HandleFunc("/api/categories", s.handleUpdateCategory()).Methods("PUT")
 
+	// 404 Handler
+	// TODO: Add good page for 404 with view and some additional info
+	s.router.NotFoundHandler = http.HandlerFunc(notFound)
+
 	// Static files
-	// TODO: Deliver this to NGINX later, with proxy and ssl
-	s.router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))
+	// // TODO: Deliver this to NGINX later, with proxy and ssl
+	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
 }
 
 func (s *Server) configureStore() error {
@@ -94,4 +100,10 @@ func (s *Server) configureStore() error {
 
 	s.store = st
 	return nil
+}
+
+func notFound(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "text/html")
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprintf(w, "<h1>This is 404 page for %s. Sorry...</h1>\n", r.URL.Path)
 }
