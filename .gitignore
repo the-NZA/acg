@@ -5,4 +5,5 @@ static
 .DS_Store
 *.vim
 docker-compose.yml
+Dockerfile
 etc

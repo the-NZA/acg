@@ -1,4 +1,4 @@
-{{template "header" .Page}}
+{{template "header_posts" .}}
 
 <div class="posts">
 	{{template "page_title" .Page}}
@@ -47,7 +47,9 @@
 				</div>
 				{{end}}
 			</div>
-			{{template "pagination"}}
+			{{if gt .PagesCnt 1}}
+				{{template "pagination" .}}
+			{{end}}
 		</main>
 	</div>
 </div>

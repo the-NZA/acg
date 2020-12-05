@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/the-NZA/acg/internal/app/helpers"
 	"github.com/the-NZA/acg/internal/app/store/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,7 +21,9 @@ type postspage struct {
 	Page       models.Page
 	Posts      []models.Post
 	Categories []models.Category
-	Pagination []string
+	Pagination []helpers.PaginationLink
+	PagesCnt   int
+	PageNum    string
 }
 
 func init() {
@@ -109,24 +112,18 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 			s.logger.Error(err)
 		}
 
+		// Calcs number of pages
+		numOfPgs := math.Ceil(float64(pstsCnt) / float64(pstsPerPage))
+
 		// Redirect to the first page if out of range
-		if pstsCnt < pstsPerPage*pageNum {
-			s.logger.Warn("triggered unexisting page")
+		if pageNum > int64(numOfPgs) {
+			s.logger.Warn("Triggered unexisting page")
 			http.Redirect(w, r, "/posts", http.StatusTemporaryRedirect)
 			return
 		}
 
-		// Cals number of pages
-		numOfPgs := math.Ceil(float64(pstsCnt) / float64(pstsPerPage))
-		s.logger.Info(numOfPgs)
-
-		// Create slice for representing pagination links
-		pagiArr := make([]string, int(numOfPgs))
-
-		for i := range pagiArr {
-			pagiArr[i] = "this is url " + strconv.Itoa(i)
-		}
-
+		// Generate pagination slice
+		pagiArr := helpers.GeneratePagination(int(pageNum), int(numOfPgs))
 		s.logger.Info(pagiArr)
 
 		cats, err := s.store.FindAllCategories(bson.M{})
@@ -154,6 +151,9 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 			Page:       m,
 			Posts:      psts,
 			Categories: cats,
+			Pagination: pagiArr,
+			PageNum:    strconv.Itoa(int(pageNum)),
+			PagesCnt:   int(numOfPgs),
 		}
 
 		tpl.ExecuteTemplate(w, "posts.gohtml", postsContent)

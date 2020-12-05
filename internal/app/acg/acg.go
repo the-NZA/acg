@@ -89,7 +89,7 @@ func (s *Server) configureRouter() {
 
 	// Static files
 	// // TODO: Deliver this to NGINX later, with proxy and ssl
-	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
+	// s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
 }
 
 func (s *Server) configureStore() error {
