@@ -14,7 +14,7 @@ import (
 )
 
 var tpl *template.Template
-var pstsPerPage int64 = 1 // Number of posts per each page
+var pstsPerPage int64 = 15 // Number of posts per each page
 
 // postspage represent struct for each page, which show posts
 type postspage struct {
@@ -124,7 +124,6 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 
 		// Generate pagination slice
 		pagiArr := helpers.GeneratePagination(int(pageNum), int(numOfPgs))
-		s.logger.Info(pagiArr)
 
 		cats, err := s.store.FindAllCategories(bson.M{})
 		if err != nil {
