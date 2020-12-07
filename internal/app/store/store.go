@@ -207,6 +207,52 @@ func (s *Store) CountAllPosts(opts ...*options.CountOptions) (int64, error) {
 	return cnt, nil
 }
 
+// FindMaterials return slice of materials and error, if something went wrong
+func (s *Store) FindMaterials(filter bson.M) ([]models.Material, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := s.db.Database(dbName)
+	col := db.Collection("materials")
+	cur, err := col.Find(ctx, filter)
+
+	if err != nil {
+		return nil, err
+	}
+
+	cats := make([]models.Material, 0)
+
+	err = cur.All(ctx, &cats)
+	if err != nil {
+		return nil, err
+	}
+
+	return cats, nil
+}
+
+// FindMaterials return slice of materials and error, if something went wrong
+func (s *Store) FindMatcategories(filter bson.M) ([]models.MatCategory, error) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	db := s.db.Database(dbName)
+	col := db.Collection("matcategories")
+	cur, err := col.Find(ctx, filter)
+
+	if err != nil {
+		return nil, err
+	}
+
+	cats := make([]models.MatCategory, 0)
+
+	err = cur.All(ctx, &cats)
+	if err != nil {
+		return nil, err
+	}
+
+	return cats, nil
+}
+
 // InsertOne add data to collection
 func (s *Store) InsertOne(collection string, data interface{}) (*mongo.InsertOneResult, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)

@@ -14,17 +14,6 @@ import (
 )
 
 var tpl *template.Template
-var pstsPerPage int64 = 15 // Number of posts per each page
-
-// postspage represent struct for each page, which show posts
-type postspage struct {
-	Page       models.Page
-	Posts      []models.Post
-	Categories []models.Category
-	Pagination []helpers.PaginationLink
-	PagesCnt   int
-	PageNum    string
-}
 
 func init() {
 	tpl = template.Must(template.ParseGlob("views/*.gohtml"))
@@ -76,6 +65,17 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 
 // Posts page
 func (s *Server) handlePostsPage() http.HandlerFunc {
+	var pstsPerPage int64 = 15 // Number of posts per each page
+
+	type postspage struct {
+		Page       models.Page
+		Posts      []models.Post
+		Categories []models.Category
+		Pagination []helpers.PaginationLink
+		PagesCnt   int
+		PageNum    string
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := models.Page{}
 		vars := mux.Vars(r)
@@ -85,6 +85,7 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 		if err != nil {
 			s.logger.Info(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
+			return
 		}
 
 		// Parse mux url vars to get pageNum
@@ -190,33 +191,53 @@ func (s *Server) handleServicesPage() http.HandlerFunc {
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
 		}
 
-		pageContect := &services{m, srv}
+		pageContent := &services{m, srv}
 
-		tpl.ExecuteTemplate(w, "services.gohtml", pageContect)
+		tpl.ExecuteTemplate(w, "services.gohtml", pageContent)
 	}
 }
 
 // Materials page
 func (s *Server) handleMaterialsPage() http.HandlerFunc {
+	type materialspage struct {
+		Page    models.Page
+		MatCats []models.MatCategory
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := models.Page{}
 
 		bs, err := s.store.FindOne("pages", bson.M{"slug": r.URL.Path})
 		if err != nil {
+			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
+			return
 		}
 
 		bsb, err := bson.Marshal(bs)
 		if err != nil {
+			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+			return
 		}
 
 		err = bson.Unmarshal(bsb, &m)
 		if err != nil {
+			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+			return
 		}
 
-		tpl.ExecuteTemplate(w, "materials.gohtml", &m)
+		mats, err := s.store.FindMatcategories(bson.M{})
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/404", http.StatusNotFound)
+			return
+		}
+
+		pageContent := &materialspage{m, mats}
+
+		tpl.ExecuteTemplate(w, "materials.gohtml", pageContent)
 	}
 }
 

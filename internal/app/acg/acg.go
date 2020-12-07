@@ -58,6 +58,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/", s.handleHomePage())
 	s.router.HandleFunc("/materials", s.handleMaterialsPage())
 	s.router.HandleFunc("/posts", s.handlePostsPage())
+	s.router.HandleFunc("/posts/", s.handlePostsPage())
 	s.router.HandleFunc("/posts/{page}", s.handlePostsPage())
 	s.router.HandleFunc("/services", s.handleServicesPage())
 	s.router.HandleFunc("/about", s.handleAboutPage())
@@ -78,10 +79,20 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/posts", s.handleCreatePost()).Methods("POST")
 	s.router.HandleFunc("/api/posts", s.handleUpdatePost()).Methods("PUT")
 
-	// Posts API routes
+	// Categories API routes
 	s.router.HandleFunc("/api/categories", s.handleGetCatigories()).Methods("GET")
 	s.router.HandleFunc("/api/categories", s.handleCreateCategory()).Methods("POST")
 	s.router.HandleFunc("/api/categories", s.handleUpdateCategory()).Methods("PUT")
+
+	// Materials API routes
+	s.router.HandleFunc("/api/materials", s.handleGetMaterials()).Methods("GET")
+	s.router.HandleFunc("/api/materials", s.handleCreateMaterial()).Methods("POST")
+	// s.router.HandleFunc("/api/materials", s.handleUpdateMaterial()).Methods("PUT")
+
+	// MatCategories API routes
+	s.router.HandleFunc("/api/matcategories", s.handleGetMatcat()).Methods("GET")
+	s.router.HandleFunc("/api/matcategories", s.handleCreateMatcat()).Methods("POST")
+	// s.router.HandleFunc("/api/matcategories", s.handleUpdateMatcat()).Methods("PUT")
 
 	// 404 Handler
 	// TODO: Add good page for 404 with view and some additional info

@@ -353,6 +353,8 @@ func (s *Server) handleUpdatePost() http.HandlerFunc {
 			return
 		}
 
+		// TODO: Add update item in category after update post in db
+
 		if res.UpsertedID == nil {
 			bsbytes, err = json.Marshal(nc.ID)
 			if err != nil {
@@ -474,5 +476,126 @@ func (s *Server) handleUpdateCategory() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(bsbytes)
+	}
+}
+
+/*
+* Materials Handlers for CRUD operations
+ */
+// Handle POST materials on /materials
+func (s *Server) handleCreateMaterial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nm := &models.Material{
+			ID:   primitive.NewObjectID(),
+			Time: time.Now(),
+		}
+
+		nm.TimeString = nm.Time.Format("02.01.2006")
+
+		err := json.NewDecoder(r.Body).Decode(nm)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res, err := s.store.InsertOne("materials", nm)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		s.store.UpdateOne("matcategories", bson.M{"title": nm.Category}, bson.M{"$push": bson.M{"materials": nm}})
+
+		js, err := json.Marshal(res.InsertedID)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+	}
+}
+
+// Handel GET materials on /materials
+func (s *Server) handleGetMaterials() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		mats, err := s.store.FindMaterials(bson.M{})
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		pjs, err := json.Marshal(mats)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(pjs)
+	}
+}
+
+/*
+* MatCategories Handlers for CRUD operations
+ */
+// Handel GET materials on /materials
+func (s *Server) handleGetMatcat() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		mats, err := s.store.FindMatcategories(bson.M{})
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		pjs, err := json.Marshal(mats)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(pjs)
+	}
+}
+
+// Handle POST materials on /materials
+func (s *Server) handleCreateMatcat() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		np := &models.MatCategory{
+			ID: primitive.NewObjectID(),
+		}
+
+		err := json.NewDecoder(r.Body).Decode(np)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res, err := s.store.InsertOne("matcategories", np)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		js, err := json.Marshal(res.InsertedID)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
 	}
 }
