@@ -2,7 +2,9 @@ package acg
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/the-NZA/acg/internal/app/store/models"
@@ -589,6 +591,69 @@ func (s *Server) handleCreateMatcat() http.HandlerFunc {
 		}
 
 		js, err := json.Marshal(res.InsertedID)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+	}
+}
+
+/* Upload routes */
+// Handle POST on /upload
+func (s *Server) handleUploadFile() http.HandlerFunc {
+	type res struct {
+		OK   bool   `json:"ok"`
+		Name string `json:"name"`
+		Size int64  `json:"size"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Set max upload size at ~32MB
+		r.ParseMultipartForm(32 << 20)
+
+		tf, h, err := r.FormFile("acg_upload")
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer tf.Close()
+
+		// s.logger.Infof("uploaded file: %+v\n", h.Filename)
+		// s.logger.Infof("file size: %+v bytes\n", h.Size)
+		// s.logger.Infof("MIME type: %+v\n", h.Header)
+
+		suf := time.Now().Format("02-01-2006_15-04")
+		upload_path := "uploads/" + suf + "_" + h.Filename
+
+		f, err := os.OpenFile(upload_path, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+
+		wrtn, err := io.Copy(f, tf)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		s.logger.Infof("File %s uploaded in %s. Size %v\n", h.Filename, f.Name(), wrtn)
+
+		resp := &res{
+			OK:   true,
+			Name: upload_path,
+			Size: wrtn,
+		}
+
+		js, err := json.Marshal(resp)
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
