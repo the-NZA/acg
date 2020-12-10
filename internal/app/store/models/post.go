@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	validation "github.com/go-ozzo/ozzo-validation"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -33,3 +34,25 @@ type Category struct {
 
 // t := time.Now()
 // fmt.Println(t.Format("02.01.2006"))
+
+func (p Post) Validate() error {
+	return validation.ValidateStruct(&p,
+		validation.Field(&p.Title, validation.Required, validation.Length(5, 150)),
+		validation.Field(&p.Excerpt, validation.Required, validation.Length(120, 240)),
+		validation.Field(&p.URL, validation.Required, validation.Length(10, 120)),
+		validation.Field(&p.Category, validation.Required, validation.Length(4, 120)),
+		validation.Field(&p.CategoryURL, validation.Required, validation.Length(10, 120)),
+		validation.Field(&p.MetaDesc, validation.Required, validation.Length(100, 255)),
+		// validation.Field(&p.PostImg, validation.Required),
+		// validation.Field(&p.PageData, validation.Required),
+	)
+}
+
+func (c Category) Validate() error {
+	return validation.ValidateStruct(&c,
+		validation.Field(&c.Title, validation.Required, validation.Length(5, 120)),
+		validation.Field(&c.Subtitle, validation.Required, validation.Length(70, 255)),
+		validation.Field(&c.URL, validation.Required, validation.Length(10, 120)),
+		validation.Field(&c.MetaDesc, validation.Required, validation.Length(100, 255)),
+	)
+}

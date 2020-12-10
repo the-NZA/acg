@@ -53,7 +53,7 @@ func (s *Server) handleCreatePage() http.HandlerFunc {
 			return
 		}
 
-		np.Slug = helpers.GenerateSlug(np.Title)
+		np.Slug = fmt.Sprintf("/%s", helpers.GenerateSlug(np.Title))
 
 		res, err := s.store.InsertOne("pages", np)
 		if err != nil {
@@ -162,6 +162,12 @@ func (s *Server) handleCreateService() http.HandlerFunc {
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if ns.Validate() != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -302,6 +308,12 @@ func (s *Server) handleCreatePost() http.HandlerFunc {
 
 		np.URL = fmt.Sprintf("%s/%s", np.CategoryURL, helpers.GenerateSlug(np.Title))
 
+		if np.Validate() != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		res, err := s.store.InsertOne("posts", np)
 		if err != nil {
 			s.logger.Error(err)
@@ -418,6 +430,12 @@ func (s *Server) handleCreateCategory() http.HandlerFunc {
 
 		np.URL = "/category/" + helpers.GenerateSlug(np.Title)
 
+		if np.Validate() != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		res, err := s.store.InsertOne("categories", np)
 		if err != nil {
 			s.logger.Error(err)
@@ -509,6 +527,12 @@ func (s *Server) handleCreateMaterial() http.HandlerFunc {
 			return
 		}
 
+		if nm.Validate() != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		res, err := s.store.InsertOne("materials", nm)
 		if err != nil {
 			s.logger.Error(err)
@@ -588,6 +612,12 @@ func (s *Server) handleCreateMatcat() http.HandlerFunc {
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if np.Validate() != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
