@@ -83,7 +83,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/posts", s.handleUpdatePost()).Methods("PUT")
 
 	// Categories API routes
-	s.router.HandleFunc("/api/categories", s.handleGetCatigories()).Methods("GET")
+	s.router.HandleFunc("/api/categories", s.handleGetCategories()).Methods("GET")
 	s.router.HandleFunc("/api/categories", s.handleCreateCategory()).Methods("POST")
 	s.router.HandleFunc("/api/categories", s.handleUpdateCategory()).Methods("PUT")
 

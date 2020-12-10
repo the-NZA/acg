@@ -2,11 +2,13 @@ package acg
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/the-NZA/acg/internal/app/helpers"
 	"github.com/the-NZA/acg/internal/app/store/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -50,6 +52,8 @@ func (s *Server) handleCreatePage() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		np.Slug = helpers.GenerateSlug(np.Title)
 
 		res, err := s.store.InsertOne("pages", np)
 		if err != nil {
@@ -296,6 +300,8 @@ func (s *Server) handleCreatePost() http.HandlerFunc {
 			return
 		}
 
+		np.URL = fmt.Sprintf("%s/%s", np.CategoryURL, helpers.GenerateSlug(np.Title))
+
 		res, err := s.store.InsertOne("posts", np)
 		if err != nil {
 			s.logger.Error(err)
@@ -375,7 +381,7 @@ func (s *Server) handleUpdatePost() http.HandlerFunc {
 * Categories Handlers for CRUD operations
  */
 // Handel GET all categories on /categories
-func (s *Server) handleGetCatigories() http.HandlerFunc {
+func (s *Server) handleGetCategories() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cats, err := s.store.FindAllCategories(bson.M{})
 		if err != nil {
@@ -409,6 +415,8 @@ func (s *Server) handleCreateCategory() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		np.URL = "/category/" + helpers.GenerateSlug(np.Title)
 
 		res, err := s.store.InsertOne("categories", np)
 		if err != nil {
