@@ -63,6 +63,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/services", s.handleServicesPage())
 	s.router.HandleFunc("/about", s.handleAboutPage())
 	s.router.HandleFunc("/contacts", s.handleContactsPage())
+	s.router.HandleFunc("/category/{cat}/{post_name}", s.handleSinglePost())
 
 	// Upload API route
 	s.router.HandleFunc("/api/upload", s.handleUploadFile()).Methods("POST")

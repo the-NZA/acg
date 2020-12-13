@@ -63,6 +63,26 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 	}
 }
 
+// Singlepost page
+func (s *Server) handleSinglePost() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		s.logger.Info(vars)
+
+		pst := &models.Post{
+			Title:       "Mock title",
+			Excerpt:     "mock excerpt data, just for test",
+			Category:    "Новости",
+			CategoryURL: "/category/news",
+			MetaDesc:    "some meta test desc",
+			TimeString:  "22.12.2020",
+		}
+
+		tpl.ExecuteTemplate(w, "singlepost.gohtml", pst)
+	}
+}
+
 // Posts page
 func (s *Server) handlePostsPage() http.HandlerFunc {
 	var pstsPerPage int64 = 15 // Number of posts per each page
