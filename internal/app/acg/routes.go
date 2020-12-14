@@ -66,18 +66,41 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 // Singlepost page
 func (s *Server) handleSinglePost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var pst models.Post
 		vars := mux.Vars(r)
 
-		s.logger.Info(vars)
+		// s.logger.Info(vars)
 
-		pst := &models.Post{
-			Title:       "Mock title",
-			Excerpt:     "mock excerpt data, just for test",
-			Category:    "Новости",
-			CategoryURL: "/category/news",
-			MetaDesc:    "some meta test desc",
-			TimeString:  "22.12.2020",
+		pstUrl := "/category/" + vars["cat"] + "/" + vars["post"]
+
+		bs, err := s.store.FindOne("posts", bson.M{"url": pstUrl})
+		if err != nil {
+			s.logger.Error(err)
+			http.NotFound(w, r)
 		}
+
+		bsb, err := bson.Marshal(bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/posts", http.StatusInternalServerError)
+			return
+		}
+
+		err = bson.Unmarshal(bsb, &pst)
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/posts", http.StatusInternalServerError)
+			return
+		}
+
+		// pst := &models.Post{
+		// 	Title:       "Mock title",
+		// 	Excerpt:     "mock excerpt data, just for test",
+		// 	Category:    "Новости",
+		// 	CategoryURL: "/category/news",
+		// 	MetaDesc:    "some meta test desc",
+		// 	TimeString:  "22.12.2020",
+		// }
 
 		tpl.ExecuteTemplate(w, "singlepost.gohtml", pst)
 	}
