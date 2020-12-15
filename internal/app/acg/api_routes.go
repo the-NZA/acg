@@ -362,6 +362,7 @@ func (s *Server) handleUpdatePost() http.HandlerFunc {
 			return
 		}
 
+		// Delete ID to map (for corrent update)
 		if _, exist := bs["_id"]; exist {
 			delete(bs, "_id")
 		}
@@ -373,7 +374,14 @@ func (s *Server) handleUpdatePost() http.HandlerFunc {
 			return
 		}
 
-		// TODO: Add update item in category after update post in db
+		// Return ID to map (for corrent category update)
+		bs["_id"] = nc.ID
+		_, err = s.store.UpdateOne("categories", bson.M{"url": nc.CategoryURL, "posts._id": nc.ID}, bson.M{"$set": bson.M{"posts.$": bs}})
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		if res.UpsertedID == nil {
 			bsbytes, err = json.Marshal(nc.ID)

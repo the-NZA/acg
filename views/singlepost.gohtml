@@ -24,17 +24,25 @@
 	</div> 
 
 	<article class="singlepost__content">
-		<p class="singlepost__text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus iste iusto delectus quis consequatur dolores
-		suscipit perspiciatis voluptatem culpa maxime.Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus iste iusto delectus quis consequatur dolores suscipit perspiciatis voluptatem culpa maxime.</p>
-		<p class="singlepost__text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus iste iusto delectus quis consequatur dolores
-		suscipit perspiciatis voluptatem culpa maxime.Exercitationem repudiandae quos accusantium autem natus repellat maiores dicta maxime ea blanditiis ipsa esse laborum, earum illo! Minima, ipsum magni?</p>
-		<p class="singlepost__text">Maxime facilis maiores placeat suscipit, assumenda hic molestias labore alias qui accusantium. Voluptate laboriosam aspernatur cumque fuga minus commodi eos.</p>
-		<p class="singlepost__text">Officiis, eius excepturi sed ea libero mollitia obcaecati corrupti maiores. Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus iste iusto delectus quis consequatur dolores
-		suscipit perspiciatis voluptatem culpa maxime.Nobis sunt eum voluptate eligendi facere laudantium, nemo vitae reprehenderit!</p>
-		<p class="singlepost__text">Laboriosam ipsam ullam numquam soluta at quia iure recusandae voluptatem itaque Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus iste iusto delectus quis consequatur dolores
-		suscipit perspiciatis voluptatem culpa maxime.dolorem possimus explicabo earum, a eaque, distinctio laborum esse!</p>
-		<p class="singlepost__text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatem iste sunt architecto, excepturi assumenda error tempore unde fugit praesentium corrupti hic sint. Sed rerum consequuntur doloribus ea atque corrupti quidem quasi eius quam ipsa facilis nemo debitis a eaque in, non porro. Quidem dignissimos commodi, aperiam rerum impedit iusto esse.</p>
+	{{ $blocks := .PageData }}
+	{{ if $blocks }}
+		{{range $block := $blocks}}
+			{{ if eq $block.Type "paragraph" }}
+				<p class="singlepost__text">
+					{{ $block.Data.Text }}
+				</p>
+			{{ else if eq $block.Type "image"}}
+				<img src="{{ $block.Data.File.URL }}" alt="Проблема с загрузкой изображения" class="singlepage__img">
+			{{ end }}
+		{{end}}
+	{{else}}
+		<p class="singlepost__text">Материал обновляется, возвращайтесь немного позже.</p>
+	{{end}}
 	</article>
 </main>
 
 {{template "footer"}}
+
+<!-- EXAMPLE OF PARAGRAPH FOR POST -->
+<!-- <p class="singlepost__text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus iste iusto delectus quis consequatur dolores -->
+<!-- suscipit perspiciatis voluptatem culpa maxime.Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus iste iusto delectus quis consequatur dolores suscipit perspiciatis voluptatem culpa maxime.</p> -->
