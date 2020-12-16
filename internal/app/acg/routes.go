@@ -15,6 +15,8 @@ import (
 
 var tpl *template.Template
 
+const pstsPerPage int64 = 15 // Number of posts per each page
+
 func init() {
 	tpl = template.Must(template.ParseGlob("views/*.gohtml"))
 }
@@ -69,14 +71,14 @@ func (s *Server) handleSinglePost() http.HandlerFunc {
 		var pst models.Post
 		vars := mux.Vars(r)
 
-		// s.logger.Info(vars)
-
 		pstUrl := "/category/" + vars["cat"] + "/" + vars["post"]
 
 		bs, err := s.store.FindOne("posts", bson.M{"url": pstUrl})
 		if err != nil {
 			s.logger.Error(err)
-			http.NotFound(w, r)
+			// http.Redirect(w, r, "/404", http.StatusNotFound)
+			http.Redirect(w, r, "/posts", http.StatusInternalServerError)
+			return
 		}
 
 		bsb, err := bson.Marshal(bs)
@@ -93,22 +95,12 @@ func (s *Server) handleSinglePost() http.HandlerFunc {
 			return
 		}
 
-		// pst := &models.Post{
-		// 	Title:       "Mock title",
-		// 	Excerpt:     "mock excerpt data, just for test",
-		// 	Category:    "Новости",
-		// 	CategoryURL: "/category/news",
-		// 	MetaDesc:    "some meta test desc",
-		// 	TimeString:  "22.12.2020",
-		// }
-
 		tpl.ExecuteTemplate(w, "singlepost.gohtml", pst)
 	}
 }
 
 // Posts page
 func (s *Server) handlePostsPage() http.HandlerFunc {
-	var pstsPerPage int64 = 15 // Number of posts per each page
 
 	type postspage struct {
 		Page       models.Page
@@ -118,7 +110,6 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 		PagesCnt   int
 		PageNum    string
 	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := models.Page{}
 		vars := mux.Vars(r)
@@ -200,6 +191,64 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 		}
 
 		tpl.ExecuteTemplate(w, "posts.gohtml", postsContent)
+	}
+}
+
+func (s *Server) handleCategoryPage() http.HandlerFunc {
+	type categorypage struct {
+		Page       models.Page
+		Current    models.Category
+		Categories []models.Category
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := models.Category{}
+		// vars := mux.Vars(r)
+
+		s.logger.Info(r.URL)
+
+		bs, err := s.store.FindOne("categories", bson.M{"url": r.URL})
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
+			// http.NotFound(w, r)
+			return
+		}
+
+		cats, err := s.store.FindAllCategories(bson.M{})
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+			return
+		}
+
+		bsb, err := bson.Marshal(bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+			return
+		}
+
+		err = bson.Unmarshal(bsb, &m)
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+			return
+		}
+
+		ct := &categorypage{
+			Page: models.Page{
+				Title:    m.Title,
+				Subtitle: m.Subtitle,
+				MetaDesc: m.MetaDesc,
+				Slug:     m.URL,
+				PageData: nil,
+			},
+			Current:    m,
+			Categories: cats,
+		}
+
+		tpl.ExecuteTemplate(w, "category.gohtml", ct)
 	}
 }
 

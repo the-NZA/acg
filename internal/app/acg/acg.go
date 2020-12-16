@@ -56,13 +56,23 @@ func (s *Server) configureRouter() {
 
 	// Website routes
 	s.router.HandleFunc("/", s.handleHomePage())
-	s.router.HandleFunc("/materials", s.handleMaterialsPage())
+
 	s.router.HandleFunc("/posts", s.handlePostsPage())
 	s.router.HandleFunc("/posts/", s.handlePostsPage())
 	s.router.HandleFunc("/posts/{page}", s.handlePostsPage())
+
+	s.router.HandleFunc("/materials", s.handleMaterialsPage())
 	s.router.HandleFunc("/services", s.handleServicesPage())
 	s.router.HandleFunc("/about", s.handleAboutPage())
 	s.router.HandleFunc("/contacts", s.handleContactsPage())
+
+	s.router.HandleFunc("/category", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/posts", http.StatusTemporaryRedirect)
+	})
+	s.router.HandleFunc("/category/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/posts", http.StatusTemporaryRedirect)
+	})
+	s.router.HandleFunc("/category/{cat}", s.handleCategoryPage())
 	s.router.HandleFunc("/category/{cat}/{post}", s.handleSinglePost())
 
 	// Upload API route
@@ -98,13 +108,10 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/matcategories", s.handleCreateMatcat()).Methods("POST")
 	// s.router.HandleFunc("/api/matcategories", s.handleUpdateMatcat()).Methods("PUT")
 
+	s.router.HandleFunc("/404", notFound)
 	// 404 Handler
 	// TODO: Add good page for 404 with view and some additional info
 	s.router.NotFoundHandler = http.HandlerFunc(notFound)
-
-	// Static files
-	// // TODO: Deliver this to NGINX later, with proxy and ssl
-	// s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
 }
 
 func (s *Server) configureStore() error {
@@ -120,5 +127,5 @@ func (s *Server) configureStore() error {
 func notFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "text/html")
 	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintf(w, "<h1>This is 404 page for %s. Sorry...</h1>\n", r.URL.Path)
+	fmt.Fprint(w, "<h1>This is 404 page. Sorry...</h1>\n")
 }
