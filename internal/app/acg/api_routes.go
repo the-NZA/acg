@@ -165,7 +165,7 @@ func (s *Server) handleCreateService() http.HandlerFunc {
 			return
 		}
 
-		if ns.Validate() != nil {
+		if err = ns.Validate(); err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -308,7 +308,7 @@ func (s *Server) handleCreatePost() http.HandlerFunc {
 
 		np.URL = fmt.Sprintf("%s/%s", np.CategoryURL, helpers.GenerateSlug(np.Title))
 
-		if np.Validate() != nil {
+		if err = np.Validate(); err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -438,7 +438,7 @@ func (s *Server) handleCreateCategory() http.HandlerFunc {
 
 		np.URL = "/category/" + helpers.GenerateSlug(np.Title)
 
-		if np.Validate() != nil {
+		if err = np.Validate(); err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -535,7 +535,7 @@ func (s *Server) handleCreateMaterial() http.HandlerFunc {
 			return
 		}
 
-		if nm.Validate() != nil {
+		if err = nm.Validate(); err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -623,7 +623,7 @@ func (s *Server) handleCreateMatcat() http.HandlerFunc {
 			return
 		}
 
-		if np.Validate() != nil {
+		if err = np.Validate(); err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

@@ -231,13 +231,13 @@ func (s *Store) FindMaterials(filter bson.M) ([]models.Material, error) {
 }
 
 // FindMaterials return slice of materials and error, if something went wrong
-func (s *Store) FindMatcategories(filter bson.M) ([]models.MatCategory, error) {
+func (s *Store) FindMatcategories(filter bson.M, opts ...*options.FindOptions) ([]models.MatCategory, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db := s.db.Database(dbName)
 	col := db.Collection("matcategories")
-	cur, err := col.Find(ctx, filter)
+	cur, err := col.Find(ctx, filter, opts...)
 
 	if err != nil {
 		return nil, err

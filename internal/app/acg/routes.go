@@ -320,11 +320,20 @@ func (s *Server) handleMaterialsPage() http.HandlerFunc {
 			return
 		}
 
-		mats, err := s.store.FindMatcategories(bson.M{})
+		findOptions := options.Find()
+		findOptions.Projection = bson.M{"materials": bson.M{"$slice": -3}}
+		// findOptions.SetSort(bson.M{"materials.timestring": 1})
+
+		mats, err := s.store.FindMatcategories(bson.M{}, findOptions)
 		if err != nil {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 			return
+		}
+
+		for i, _ := range mats {
+			l := len(mats[i].Materials)
+			mats[i].Materials[0], mats[i].Materials[l-1] = mats[i].Materials[l-1], mats[i].Materials[0]
 		}
 
 		pageContent := &materialspage{m, mats}
