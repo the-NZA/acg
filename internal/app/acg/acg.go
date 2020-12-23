@@ -105,9 +105,10 @@ func (s *Server) configureRouter() {
 	// s.router.HandleFunc("/api/materials", s.handleUpdateMaterial()).Methods("PUT")
 
 	// MatCategories API routes
+	s.router.HandleFunc("/api/matcategory", s.handleGetOneMatcat()).Methods("GET")
 	s.router.HandleFunc("/api/matcategories", s.handleGetMatcat()).Methods("GET")
 	s.router.HandleFunc("/api/matcategories", s.handleCreateMatcat()).Methods("POST")
-	// s.router.HandleFunc("/api/matcategories", s.handleUpdateMatcat()).Methods("PUT")
+	s.router.HandleFunc("/api/matcategories", s.handleUpdateMatcat()).Methods("PUT")
 
 	s.router.HandleFunc("/404", notFound)
 	// 404 Handler

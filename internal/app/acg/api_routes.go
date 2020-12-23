@@ -86,13 +86,6 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 			return
 		}
 
-		// js, err := json.Marshal(np)
-		// if err != nil {
-		// 	s.logger.Error(err)
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-
 		bsbytes, err := bson.Marshal(np)
 		if err != nil {
 			s.logger.Error(err)
@@ -102,7 +95,6 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 
 		var bs bson.M
 		err = bson.Unmarshal(bsbytes, &bs)
-		// err = bson.UnmarshalExtJSON([]byte(js), true, &bs)
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -112,20 +104,6 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 		if _, exist := bs["_id"]; exist {
 			delete(bs, "_id")
 		}
-
-		// js, err = json.Marshal(bs)
-		// if err != nil {
-		// 	s.logger.Error(err)
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-
-		// err = bson.UnmarshalExtJSON([]byte(js), true, &bs)
-		// if err != nil {
-		// 	s.logger.Error(err)
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
 
 		res, err := s.store.UpdateOne("pages", bson.M{"_id": np.ID}, bson.M{"$set": bs})
 		if err != nil {
@@ -587,7 +565,7 @@ func (s *Server) handleGetMaterials() http.HandlerFunc {
 /*
 * MatCategories Handlers for CRUD operations
  */
-// Handel GET materials on /materials
+// Handle GET matcategories on /api/matcategories
 func (s *Server) handleGetMatcat() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		mats, err := s.store.FindMatcategories(bson.M{})
@@ -609,7 +587,41 @@ func (s *Server) handleGetMatcat() http.HandlerFunc {
 	}
 }
 
-// Handle POST materials on /materials
+func (s *Server) handleGetOneMatcat() http.HandlerFunc {
+	type req_body struct {
+		Slug string `bson:"slug" json:"slug"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		rb := &req_body{}
+
+		err := json.NewDecoder(r.Body).Decode(rb)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		bs, err := s.store.FindOne("matcategories", bson.M{"slug": rb.Slug})
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		js, err := bson.MarshalExtJSON(bs, true, true)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(js)
+	}
+}
+
+// Handle POST matcategories on /api/matcategories
 func (s *Server) handleCreateMatcat() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		np := &models.MatCategory{
@@ -622,6 +634,8 @@ func (s *Server) handleCreateMatcat() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		np.Slug = helpers.GenerateSlug(np.Title)
 
 		if err = np.Validate(); err != nil {
 			s.logger.Error(err)
@@ -645,6 +659,58 @@ func (s *Server) handleCreateMatcat() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(js)
+	}
+}
+
+// Handle PUT matcategories on /api/matcategories
+func (s *Server) handleUpdateMatcat() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nc := &models.MatCategory{}
+
+		err := json.NewDecoder(r.Body).Decode(nc)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		bsbytes, err := bson.Marshal(nc)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		res, err := s.store.UpdateOne("matcategories", bson.M{"_id": nc.ID}, bson.M{"$set": bs})
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if res.UpsertedID == nil {
+			bsbytes, err = json.Marshal(nc.ID)
+			if err != nil {
+				s.logger.Error(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(bsbytes)
 	}
 }
 

@@ -49,13 +49,15 @@
 					{{end}}
 					</div>
 	
-					<button class="mcat__showall" data-slug="audit">Показать все</button>
+					<button class="mcat__showall" data-slug="{{.Slug}}">Показать все</button>
 				</section>
 	
 			{{end}}
 			</main>
 	
 		</div>
+
+		<div class="materials__all--placeholder" id="materials__all--placeholder" style="display:none"></div>
 	
 		<div class="materials__all  matfull">
 			<div class="matfull__container">
