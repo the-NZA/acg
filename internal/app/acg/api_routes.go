@@ -15,6 +15,23 @@ import (
 )
 
 /*
+ * Helpers for Respond
+ */
+// TODO: Switch to s.respond and s.error methods for returning values
+func (s *Server) respond(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if data != nil {
+		json.NewEncoder(w).Encode(data)
+	}
+
+}
+
+func (s *Server) error(w http.ResponseWriter, r *http.Request, code int, err error) {
+	s.respond(w, r, code, map[string]string{"error": err.Error()})
+}
+
+/*
  * Pages Handlers for GET, POST and UPDATE
  */
 // Handle GET on /pages
@@ -774,5 +791,47 @@ func (s *Server) handleUploadFile() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(js)
+	}
+}
+
+/* Auth Routes */
+func (s *Server) handleRegistration() http.HandlerFunc {
+	type request struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &request{}
+
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.logger.Debug(req)
+
+		u := &models.User{
+			ID:                primitive.NewObjectID(),
+			Username:          req.Username,
+			EncryptedPassword: req.Password,
+		}
+
+		if err := u.Validate(); err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+
+		res, err := s.store.InsertOne("users", u)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.logger.Debug(res.InsertedID)
+
+		s.respond(w, r, http.StatusCreated, u)
 	}
 }

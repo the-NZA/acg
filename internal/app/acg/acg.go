@@ -79,6 +79,9 @@ func (s *Server) configureRouter() {
 	// Upload API route
 	s.router.HandleFunc("/api/upload", s.handleUploadFile()).Methods("POST")
 
+	// Auth API routes
+	s.router.HandleFunc("/api/auth/reg", s.handleRegistration()).Methods("POST")
+
 	// Pages API routes
 	s.router.HandleFunc("/api/pages", s.handleGetPages()).Methods("GET")
 	s.router.HandleFunc("/api/pages", s.handleCreatePage()).Methods("POST")

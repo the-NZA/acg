@@ -12,7 +12,7 @@
 					<div class="widget__content">
 						<ul class="widget__categories">
 						{{range .MatCats}}
-							<li><a href="#">{{.Title}}</a></li>
+							<li><a href="#" data-slug="{{.Slug}}">{{.Title}}</a></li>
 						{{end}}
 							<!-- <li><a href="#" class="active">Аудит</a></li> -->
 							<!-- <li><a href="#">Бухгалтерия</a></li> -->
@@ -25,7 +25,7 @@
 			<main class="materials__main">
 			{{range .MatCats}}
 
-				<section class="materials__category mcat">
+				<section class="materials__category mcat" data-section={{.Slug}}>
 					<div class="mcat__header">
 						<h3 class="mcat__title">{{.Title}}</h3>
 						<p class="mcat__desc">{{.Desc}}</p>

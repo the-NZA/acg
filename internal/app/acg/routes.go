@@ -332,7 +332,7 @@ func (s *Server) handleMaterialsPage() http.HandlerFunc {
 		}
 
 		// Sort in backward order
-		for i, _ := range mats {
+		for i := range mats {
 			l := len(mats[i].Materials)
 			mats[i].Materials[0], mats[i].Materials[l-1] = mats[i].Materials[l-1], mats[i].Materials[0]
 		}
