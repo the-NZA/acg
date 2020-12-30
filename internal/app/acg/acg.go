@@ -81,6 +81,7 @@ func (s *Server) configureRouter() {
 
 	// Auth API routes
 	s.router.HandleFunc("/api/auth/reg", s.handleRegistration()).Methods("POST")
+	s.router.HandleFunc("/api/auth/login", s.handleLogin()).Methods("POST")
 
 	// Pages API routes
 	s.router.HandleFunc("/api/pages", s.handleGetPages()).Methods("GET")

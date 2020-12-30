@@ -2,6 +2,7 @@ package acg
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,10 @@ import (
 	"github.com/the-NZA/acg/internal/app/store/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+var (
+	errWrongPasswordOrLogin = errors.New("Wrong username or password. Be more accurate.")
 )
 
 /*
@@ -812,9 +817,15 @@ func (s *Server) handleRegistration() http.HandlerFunc {
 		s.logger.Debug(req)
 
 		u := &models.User{
-			ID:                primitive.NewObjectID(),
-			Username:          req.Username,
-			EncryptedPassword: req.Password,
+			ID:       primitive.NewObjectID(),
+			Username: req.Username,
+			Password: req.Password,
+		}
+
+		if err := u.HashPassword(); err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
 		}
 
 		if err := u.Validate(); err != nil {
@@ -823,14 +834,60 @@ func (s *Server) handleRegistration() http.HandlerFunc {
 			return
 		}
 
-		res, err := s.store.InsertOne("users", u)
+		_, err := s.store.InsertOne("users", u)
 		if err != nil {
 			s.logger.Error(err)
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		s.logger.Debug(res.InsertedID)
+		s.respond(w, r, http.StatusCreated, u)
+	}
+}
+
+func (s *Server) handleLogin() http.HandlerFunc {
+	type request struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &request{}
+
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.logger.Debug(req)
+
+		bs, err := s.store.FindOne("users", bson.M{"username": req.Username})
+		if err != nil {
+			s.logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		u := &models.User{}
+
+		bs_bytes, err := bson.Marshal(bs)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if err := bson.Unmarshal(bs_bytes, u); err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if !u.CheckPassword(req.Password) {
+			s.logger.Debug("Wrong email or password")
+			s.error(w, r, http.StatusUnauthorized, errWrongPasswordOrLogin)
+			return
+		}
 
 		s.respond(w, r, http.StatusCreated, u)
 	}
