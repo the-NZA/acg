@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/the-NZA/acg/internal/app/helpers"
 	"github.com/the-NZA/acg/internal/app/store/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -849,6 +850,11 @@ func (s *Server) handleRegistration() http.HandlerFunc {
 	}
 }
 
+type Claims struct {
+	Username string
+	jwt.StandardClaims
+}
+
 func (s *Server) handleLogin() http.HandlerFunc {
 	type request struct {
 		Username string `json:"username"`
@@ -868,7 +874,7 @@ func (s *Server) handleLogin() http.HandlerFunc {
 		bs, err := s.store.FindOne("users", bson.M{"username": req.Username})
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, errWrongPasswordOrLogin)
 			return
 		}
 
@@ -893,6 +899,30 @@ func (s *Server) handleLogin() http.HandlerFunc {
 			return
 		}
 
-		s.respond(w, r, http.StatusCreated, u)
+		// expTime = time.Now().Add(1 * time.Hour)
+		expTime := time.Now().Add(2 * time.Minute)
+		claims := &Claims{
+			Username: u.Username,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: expTime.Unix(),
+			},
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		tokerStr, err := token.SignedString([]byte(s.config.SecretKey))
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "TKN",
+			Value:    tokerStr,
+			Expires:  expTime,
+			HttpOnly: true,
+		})
+
+		s.respond(w, r, http.StatusOK, u)
 	}
 }
