@@ -11,7 +11,6 @@ import (
 type User struct {
 	ID                primitive.ObjectID `bson:"_id" json:"_id"`
 	Username          string             `bson:"username" json:"username"`
-	Password          string             `bson:"-,omitempty" json:"-,omitempty"`
 	EncryptedPassword string             `bson:"pswd" json:"-"`
 	Email             string             `bson:"email,omitempty" json:"email,omitempty"`
 }
@@ -24,14 +23,13 @@ func (u User) Validate() error {
 	)
 }
 
-func (u *User) HashPassword() error {
-	bts, err := bcrypt.GenerateFromPassword([]byte(u.Password), 14)
+func (u *User) HashPassword(password string) error {
+	bts, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil {
 		return err
 	}
 
 	u.EncryptedPassword = string(bts)
-	u.Password = ""
 	return nil
 }
 

@@ -17,6 +17,7 @@ import (
 
 var (
 	errWrongPasswordOrLogin = errors.New("Wrong username or password. Be more accurate.")
+	errAlreadyExists        = errors.New("Username already taken. Try something else.")
 )
 
 /*
@@ -814,15 +815,18 @@ func (s *Server) handleRegistration() http.HandlerFunc {
 			return
 		}
 
-		s.logger.Debug(req)
+		// If Username already taken than return custom error
+		if _, err := s.store.FindOne("users", bson.M{"username": req.Username}); err == nil {
+			s.error(w, r, http.StatusNotAcceptable, errAlreadyExists)
+			return
+		}
 
 		u := &models.User{
 			ID:       primitive.NewObjectID(),
 			Username: req.Username,
-			Password: req.Password,
 		}
 
-		if err := u.HashPassword(); err != nil {
+		if err := u.HashPassword(req.Password); err != nil {
 			s.logger.Error(err)
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
