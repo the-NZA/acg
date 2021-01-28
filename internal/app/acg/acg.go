@@ -84,42 +84,46 @@ func (s *Server) configureRouter() {
 
 	/* API ROUTES */
 	// Upload API route
-	s.router.HandleFunc("/api/upload", s.handleUploadFile()).Methods("POST")
+	s.router.HandleFunc("/api/upload", s.authMiddleware(s.handleUploadFile())).Methods("POST")
 
 	// Auth API routes
+	// Maybe /api/auth/reg will be turned off in production
 	s.router.HandleFunc("/api/auth/reg", s.handleRegistration()).Methods("POST")
 	s.router.HandleFunc("/api/auth/login", s.handleLogin()).Methods("POST")
+	//TODO: Add /api/auth/refresh route for token auto update if his expire time almost come
 
 	// Pages API routes
-	s.router.HandleFunc("/api/pages", s.handleGetPages()).Methods("GET")
-	s.router.HandleFunc("/api/pages", s.handleCreatePage()).Methods("POST")
-	s.router.HandleFunc("/api/pages", s.handleUpdatePage()).Methods("PUT")
+	s.router.HandleFunc("/api/pages", s.authMiddleware(s.handleGetPages())).Methods("GET")
+	s.router.HandleFunc("/api/pages", s.authMiddleware(s.handleCreatePage())).Methods("POST")
+	s.router.HandleFunc("/api/pages", s.authMiddleware(s.handleUpdatePage())).Methods("PUT")
 
 	// Services API routes
-	s.router.HandleFunc("/api/services", s.handleGetServices()).Methods("GET")
-	s.router.HandleFunc("/api/services", s.handleCreateService()).Methods("POST")
-	s.router.HandleFunc("/api/services", s.handleUpdateService()).Methods("PUT")
+	s.router.HandleFunc("/api/services", s.authMiddleware(s.handleGetServices())).Methods("GET")
+	s.router.HandleFunc("/api/services", s.authMiddleware(s.handleCreateService())).Methods("POST")
+	s.router.HandleFunc("/api/services", s.authMiddleware(s.handleUpdateService())).Methods("PUT")
 
 	// Posts API routes
-	s.router.HandleFunc("/api/posts", s.handleGetPosts()).Methods("GET")
-	s.router.HandleFunc("/api/posts", s.handleCreatePost()).Methods("POST")
-	s.router.HandleFunc("/api/posts", s.handleUpdatePost()).Methods("PUT")
+	s.router.HandleFunc("/api/posts", s.authMiddleware(s.handleGetPosts())).Methods("GET")
+	s.router.HandleFunc("/api/posts", s.authMiddleware(s.handleCreatePost())).Methods("POST")
+	s.router.HandleFunc("/api/posts", s.authMiddleware(s.handleUpdatePost())).Methods("PUT")
 
 	// Categories API routes
-	s.router.HandleFunc("/api/categories", s.handleGetCategories()).Methods("GET")
-	s.router.HandleFunc("/api/categories", s.handleCreateCategory()).Methods("POST")
-	s.router.HandleFunc("/api/categories", s.handleUpdateCategory()).Methods("PUT")
+	s.router.HandleFunc("/api/categories", s.authMiddleware(s.handleGetCategories())).Methods("GET")
+	s.router.HandleFunc("/api/categories", s.authMiddleware(s.handleCreateCategory())).Methods("POST")
+	s.router.HandleFunc("/api/categories", s.authMiddleware(s.handleUpdateCategory())).Methods("PUT")
 
 	// Materials API routes
-	s.router.HandleFunc("/api/materials", s.handleGetMaterials()).Methods("GET")
-	s.router.HandleFunc("/api/materials", s.handleCreateMaterial()).Methods("POST")
-	// s.router.HandleFunc("/api/materials", s.handleUpdateMaterial()).Methods("PUT")
+	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleGetMaterials())).Methods("GET")
+	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleCreateMaterial())).Methods("POST")
+	// TODO or not meterial update
+	// s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleUpdateMaterial())).Methods("PUT")
 
 	// MatCategories API routes
+	// /api/matcategory doesn't wrapped in authMiddleware because it uses in all frontend part
 	s.router.HandleFunc("/api/matcategory", s.handleGetOneMatcat()).Methods("GET")
-	s.router.HandleFunc("/api/matcategories", s.handleGetMatcat()).Methods("GET")
-	s.router.HandleFunc("/api/matcategories", s.handleCreateMatcat()).Methods("POST")
-	s.router.HandleFunc("/api/matcategories", s.handleUpdateMatcat()).Methods("PUT")
+	s.router.HandleFunc("/api/matcategories", s.authMiddleware(s.handleGetMatcat())).Methods("GET")
+	s.router.HandleFunc("/api/matcategories", s.authMiddleware(s.handleCreateMatcat())).Methods("POST")
+	s.router.HandleFunc("/api/matcategories", s.authMiddleware(s.handleUpdateMatcat())).Methods("PUT")
 
 	s.router.HandleFunc("/404", notFound)
 	// 404 Handler
@@ -138,6 +142,7 @@ func (s *Server) configureStore() error {
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("charset", "utf-8")
 	w.Header().Set("content-type", "text/html")
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprint(w, "<h1>This is 404 page. Sorry...</h1>\n")

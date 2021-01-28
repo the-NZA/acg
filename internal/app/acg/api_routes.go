@@ -73,18 +73,11 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return []byte(s.config.SecretKey), nil
 		})
 
-		// if err != nil {
-		// 	s.error(w, r, http.StatusUnauthorized, err)
-		// 	return
-		// }
-
 		if err != nil || !tkn.Valid {
 			s.logger.Errorf("Err after parsing token: %v", err)
 			s.error(w, r, http.StatusUnauthorized, errUnauthorized)
 			return
 		}
-
-		s.logger.Info("authorized")
 
 		next(w, r)
 	}
@@ -828,7 +821,7 @@ func (s *Server) handleUploadFile() http.HandlerFunc {
 		// s.logger.Infof("file size: %+v bytes\n", h.Size)
 		// s.logger.Infof("MIME type: %+v\n", h.Header)
 
-		suf := time.Now().Format("02-01-2006_15-04")
+		suf := time.Now().Format("02-01-2006_15-04-05")
 		upload_path := "uploads/" + suf + "_" + h.Filename
 
 		f, err := os.OpenFile(upload_path, os.O_WRONLY|os.O_CREATE, 0666)
