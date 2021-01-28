@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 	"github.com/the-NZA/acg/internal/app/store"
 )
@@ -40,7 +41,13 @@ func (s *Server) Start() error {
 
 	s.logger.Info("Starting server")
 
-	return http.ListenAndServe(s.config.BindAddr, s.router)
+	// TODO configure cors
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+	})
+
+	return http.ListenAndServe(s.config.BindAddr, corsHandler.Handler(s.router))
+	// return http.ListenAndServe(s.config.BindAddr, s.router)
 }
 
 func (s *Server) configureLogger() error {
@@ -53,9 +60,9 @@ func (s *Server) configureLogger() error {
 }
 
 func (s *Server) configureRouter() {
-
 	// Website routes
 	s.router.HandleFunc("/", s.handleHomePage())
+	s.router.HandleFunc("/tmid", s.authMiddleware(s.testMiddlewareRoute()))
 
 	s.router.HandleFunc("/posts", s.handlePostsPage())
 	s.router.HandleFunc("/posts/", s.handlePostsPage())

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -19,6 +20,8 @@ import (
 var (
 	errWrongPasswordOrLogin = errors.New("Wrong username or password. Be more accurate.")
 	errAlreadyExists        = errors.New("Username already taken. Try something else.")
+	errWrongRequest         = errors.New("You provided incorrect data or did not provide them at all.")
+	errUnauthorized         = errors.New("Something wrong with token, credentials or etc.")
 )
 
 /*
@@ -36,6 +39,62 @@ func (s *Server) respond(w http.ResponseWriter, r *http.Request, code int, data 
 
 func (s *Server) error(w http.ResponseWriter, r *http.Request, code int, err error) {
 	s.respond(w, r, code, map[string]string{"error": err.Error()})
+}
+
+func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// tknCookie, err := r.Cookie("TKN")
+		// if err != nil {
+		// 	s.error(w, r, http.StatusBadRequest, errWrongRequest)
+		// 	return
+		// }
+
+		// tknString := tknCookie.Value
+
+		tknHeader := r.Header.Get("Authorization")
+		if tknHeader == "" {
+			s.error(w, r, http.StatusUnauthorized, errUnauthorized)
+			return
+		}
+
+		splited := strings.Split(tknHeader, " ")
+		if len(splited) != 2 {
+			s.error(w, r, http.StatusUnauthorized, errUnauthorized)
+			return
+		}
+
+		tknString := splited[1]
+
+		tkn, err := jwt.ParseWithClaims(tknString, &Claims{}, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected token signing: %v\n", t.Header["alg"])
+			}
+
+			return []byte(s.config.SecretKey), nil
+		})
+
+		// if err != nil {
+		// 	s.error(w, r, http.StatusUnauthorized, err)
+		// 	return
+		// }
+
+		if err != nil || !tkn.Valid {
+			s.logger.Errorf("Err after parsing token: %v", err)
+			s.error(w, r, http.StatusUnauthorized, errUnauthorized)
+			return
+		}
+
+		s.logger.Info("authorized")
+
+		next(w, r)
+	}
+}
+
+func (s *Server) testMiddlewareRoute() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.logger.Info("this is test route")
+		w.WriteHeader(http.StatusOK)
+	}
 }
 
 /*
@@ -617,16 +676,22 @@ func (s *Server) handleGetOneMatcat() http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		rb := &req_body{}
-
-		err := json.NewDecoder(r.Body).Decode(rb)
-		if err != nil {
-			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		// rb := &req_body{}
+		sl, ok := r.URL.Query()["slug"]
+		if !ok {
+			http.Error(w, errors.New("Query param not set. Try again.").Error(), http.StatusInternalServerError)
 			return
 		}
 
-		bs, err := s.store.FindOne("matcategories", bson.M{"slug": rb.Slug})
+		// err := json.NewDecoder(r.Body).Decode(rb)
+		// if err != nil {
+		// 	s.logger.Error(err)
+		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+		// 	return
+		// }
+
+		// bs, err := s.store.FindOne("matcategories", bson.M{"slug": rb.Slug})
+		bs, err := s.store.FindOne("matcategories", bson.M{"slug": sl[0]})
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -816,6 +881,13 @@ func (s *Server) handleRegistration() http.HandlerFunc {
 			return
 		}
 
+		if req.Username == "" || req.Password == "" {
+			s.error(w, r, http.StatusBadRequest, errWrongPasswordOrLogin)
+			return
+		}
+
+		s.logger.Info(req)
+
 		// If Username already taken than return custom error
 		if _, err := s.store.FindOne("users", bson.M{"username": req.Username}); err == nil {
 			s.error(w, r, http.StatusNotAcceptable, errAlreadyExists)
@@ -899,8 +971,8 @@ func (s *Server) handleLogin() http.HandlerFunc {
 			return
 		}
 
-		// expTime = time.Now().Add(1 * time.Hour)
-		expTime := time.Now().Add(2 * time.Minute)
+		expTime := time.Now().Add(1 * time.Hour)
+		// expTime := time.Now().Add(2 * time.Minute)
 		claims := &Claims{
 			Username: u.Username,
 			StandardClaims: jwt.StandardClaims{
@@ -909,7 +981,7 @@ func (s *Server) handleLogin() http.HandlerFunc {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		tokerStr, err := token.SignedString([]byte(s.config.SecretKey))
+		tokenStr, err := token.SignedString([]byte(s.config.SecretKey))
 		if err != nil {
 			s.logger.Error(err)
 			s.error(w, r, http.StatusInternalServerError, err)
@@ -918,11 +990,12 @@ func (s *Server) handleLogin() http.HandlerFunc {
 
 		http.SetCookie(w, &http.Cookie{
 			Name:     "TKN",
-			Value:    tokerStr,
+			Value:    tokenStr,
 			Expires:  expTime,
 			HttpOnly: true,
 		})
 
+		w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", tokenStr))
 		s.respond(w, r, http.StatusOK, u)
 	}
 }
