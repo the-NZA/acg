@@ -800,7 +800,8 @@ func (s *Server) handleGetMaterials() http.HandlerFunc {
 // Handle GET matcategories on /api/matcategories
 func (s *Server) handleGetMatcat() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		mats, err := s.store.FindMatcategories(bson.M{})
+		mats, err := s.store.FindMatcategories(bson.M{"deleted": false})
+		s.logger.Debugln(mats)
 		if err != nil {
 			s.logger.Error(err)
 			s.respond(w, r, http.StatusInternalServerError, err)

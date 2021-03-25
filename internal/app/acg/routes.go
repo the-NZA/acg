@@ -343,7 +343,7 @@ func (s *Server) handleMaterialsPage() http.HandlerFunc {
 		findOptions.Projection = bson.M{"materials": bson.M{"$slice": -3}}
 		// findOptions.SetSort(bson.M{"materials.timestring": 1})
 
-		matcategories, err := s.store.FindMatcategories(bson.M{}, findOptions)
+		matcategories, err := s.store.FindMatcategories(bson.M{"deleted": false}, findOptions)
 		if err != nil {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
