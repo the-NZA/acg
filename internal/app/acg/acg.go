@@ -44,7 +44,7 @@ func (s *Server) Start() error {
 	// TODO configure cors
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "OPTIONS"},
+		AllowedMethods: []string{"GET", "POST", "DELETE", "PUT", "OPTIONS"},
 		// AllowCredentials: true,
 		AllowedHeaders: []string{"Authorization", "X-Auth-Key", "X-Auth-Secret", "Content-Type", "X-Requested-With"},
 		// Debug:          true,

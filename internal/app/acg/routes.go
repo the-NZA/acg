@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -94,6 +95,15 @@ func (s *Server) handleSinglePost() http.HandlerFunc {
 			http.Redirect(w, r, "/posts", http.StatusInternalServerError)
 			return
 		}
+
+		piURL, err := url.Parse(pst.PostImg)
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/posts", http.StatusInternalServerError)
+			return
+		}
+
+		pst.PostImg = piURL.String()
 
 		tpl.ExecuteTemplate(w, "singlepost.gohtml", pst)
 	}

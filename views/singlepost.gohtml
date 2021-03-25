@@ -1,7 +1,8 @@
 {{template "header_singlepost" .}}
 
 <main class="singlepost__main">
-	<div class="singlepost__headerimg" style="background-image: url(/static/img/singlepost.jpg);"></div>
+	<div class="singlepost__headerimg" style="background-image: url({{.PostImg}});"></div>
+	<!-- <div class="singlepost__headerimg" style="background-image: url(/static/img/singlepost.jpg);"></div> -->
 
 	<div class="singlepost__title">
 		<h1 class=" pages__header singlepost__header">{{.Title}}</h1>
