@@ -30,6 +30,7 @@ type Category struct {
 	Subtitle string             `bson:"subtitle,omitempty" json:"subtitle,omitempty"`
 	URL      string             `bson:"url,omitempty" json:"url,omitempty"`
 	MetaDesc string             `bson:"metadesc,omitempty" json:"metadesc,omitempty"`
+	Deleted  bool               `bson:"deleted" json:"-"`
 	// Posts    []Post             `bson:"posts,omitempty" json:"posts,omitempty"`
 }
 

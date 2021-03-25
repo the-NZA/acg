@@ -659,6 +659,95 @@ func (s *Server) handleUpdateCategory() http.HandlerFunc {
 	}
 }
 
+// Handle DELETE on /categories
+func (s *Server) handleDeleteCategory() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nc := &models.Category{}
+
+		err := json.NewDecoder(r.Body).Decode(nc)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		nc.Deleted = true
+
+		bsbytes, err := bson.Marshal(nc)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		_, err = s.store.UpdateOne("categories", bson.M{"_id": nc.ID}, bson.M{"$set": bs})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		cat, err := s.store.FindOne("categories", bson.M{"_id": nc.ID})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.logger.Infoln(cat.Map()["url"])
+
+		posts, err := s.store.FindAllPosts(bson.M{"categoryurl": cat.Map()["url"]})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		for i := range posts {
+			posts[i].Deleted = true
+
+			postbytes, err := bson.Marshal(posts[i])
+			if err != nil {
+				s.logger.Error(err)
+				s.error(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+			var postbs bson.M
+			err = bson.Unmarshal(postbytes, &postbs)
+			if err != nil {
+				s.logger.Error(err)
+				s.error(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+			// Delete ID to map (for corrent update)
+			if _, exist := postbs["_id"]; exist {
+				delete(postbs, "_id")
+			}
+
+			_, err = s.store.UpdateOne("posts", bson.M{"_id": posts[i].ID}, bson.M{"$set": postbs})
+
+		}
+
+		// posts, err := s.store.FindAllPosts({"ca"})
+
+		s.respond(w, r, http.StatusOK, "Category successfully deleted")
+	}
+}
+
 /*
 * Materials Handlers for CRUD operations
  */
@@ -712,19 +801,11 @@ func (s *Server) handleGetMaterials() http.HandlerFunc {
 		mats, err := s.store.FindMaterials(bson.M{"deleted": false})
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		pjs, err := json.Marshal(mats)
-		if err != nil {
-			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(pjs)
+		s.respond(w, r, http.StatusOK, mats)
 	}
 }
 
@@ -737,19 +818,11 @@ func (s *Server) handleGetMatcat() http.HandlerFunc {
 		mats, err := s.store.FindMatcategories(bson.M{})
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.respond(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		pjs, err := json.Marshal(mats)
-		if err != nil {
-			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(pjs)
+		s.respond(w, r, http.StatusOK, mats)
 	}
 }
 
@@ -773,8 +846,6 @@ func (s *Server) handleGetOneMatcat() http.HandlerFunc {
 			return
 		}
 
-		var matcategory models.MatCategory
-
 		materials, err := s.store.FindMaterials(bson.M{"category_slug": sl, "deleted": false})
 		if err != nil {
 			s.logger.Error(err)
@@ -789,6 +860,7 @@ func (s *Server) handleGetOneMatcat() http.HandlerFunc {
 			return
 		}
 
+		var matcategory models.MatCategory
 		err = bson.Unmarshal(bsbytes, &matcategory)
 		if err != nil {
 			s.logger.Error(err)

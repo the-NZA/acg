@@ -117,6 +117,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/categories", s.authMiddleware(s.handleGetCategories())).Methods("GET")
 	s.router.HandleFunc("/api/categories", s.authMiddleware(s.handleCreateCategory())).Methods("POST")
 	s.router.HandleFunc("/api/categories", s.authMiddleware(s.handleUpdateCategory())).Methods("PUT")
+	s.router.HandleFunc("/api/categories", s.authMiddleware(s.handleDeleteCategory())).Methods("DELETE")
 
 	// Materials API routes
 	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleGetMaterials())).Methods("GET")

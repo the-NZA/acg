@@ -293,19 +293,3 @@ func (s *Store) UpdateOne(collection string, filter interface{}, update interfac
 
 	return r, nil
 }
-
-// func (s *Store) DeleteOne(collection string, filter interface{}) {
-// 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
-// 	defer cancel()
-
-// 	db := s.db.Database(dbName)
-// 	col := db.Collection(collection)
-
-// 	r, err := col.DeleteOne(ctx, filter, )
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return r, nil
-// }

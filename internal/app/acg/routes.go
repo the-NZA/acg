@@ -160,7 +160,7 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 		// Generate pagination slice
 		pagiArr := helpers.GeneratePagination(int(pageNum), int(numOfPgs))
 
-		cats, err := s.store.FindAllCategories(bson.M{})
+		cats, err := s.store.FindAllCategories(bson.M{"deleted": false})
 		if err != nil {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
@@ -206,7 +206,7 @@ func (s *Server) handleCategoryPage() http.HandlerFunc {
 		m := models.Category{}
 		// vars := mux.Vars(r)
 
-		s.logger.Info(r.URL)
+		s.logger.Debug(r.URL)
 
 		bs, err := s.store.FindOne("categories", bson.M{"url": r.URL})
 		if err != nil {
@@ -216,7 +216,14 @@ func (s *Server) handleCategoryPage() http.HandlerFunc {
 			return
 		}
 
-		cats, err := s.store.FindAllCategories(bson.M{})
+		if bs.Map()["deleted"] == true {
+			s.logger.Warnln("Request for deleted category")
+			http.Redirect(w, r, "/posts", http.StatusTemporaryRedirect)
+			// http.NotFound(w, r)
+			return
+		}
+
+		cats, err := s.store.FindAllCategories(bson.M{"deleted": false})
 		if err != nil {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)
