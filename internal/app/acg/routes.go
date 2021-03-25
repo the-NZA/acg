@@ -212,14 +212,12 @@ func (s *Server) handleCategoryPage() http.HandlerFunc {
 		if err != nil {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusTemporaryRedirect)
-			// http.NotFound(w, r)
 			return
 		}
 
 		if bs.Map()["deleted"] == true {
 			s.logger.Warnln("Request for deleted category")
 			http.Redirect(w, r, "/posts", http.StatusTemporaryRedirect)
-			// http.NotFound(w, r)
 			return
 		}
 

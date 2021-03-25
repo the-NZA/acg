@@ -376,15 +376,7 @@ func (s *Server) handleGetPosts() http.HandlerFunc {
 			return
 		}
 
-		pjs, err := json.Marshal(posts)
-		if err != nil {
-			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(pjs)
+		s.respond(w, r, http.StatusOK, posts)
 	}
 }
 
@@ -392,8 +384,9 @@ func (s *Server) handleGetPosts() http.HandlerFunc {
 func (s *Server) handleCreatePost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		np := &models.Post{
-			ID:   primitive.NewObjectID(),
-			Time: time.Now(),
+			ID:      primitive.NewObjectID(),
+			Time:    time.Now(),
+			Deleted: false,
 		}
 
 		np.TimeString = np.Time.Format("02.01.2006")
@@ -547,22 +540,14 @@ func (s *Server) handleDeletePost() http.HandlerFunc {
 // Handel GET all categories on /categories
 func (s *Server) handleGetCategories() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cats, err := s.store.FindAllCategories(bson.M{})
+		cats, err := s.store.FindAllCategories(bson.M{"deleted": false})
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		pjs, err := json.Marshal(cats)
-		if err != nil {
-			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(pjs)
+		s.respond(w, r, http.StatusOK, cats)
 	}
 }
 
