@@ -57,13 +57,13 @@ func (s *Store) Close() {
 }
 
 // FindOne finds all record in collection by filter
-func (s *Store) FindOne(collection string, filter interface{}) (bson.D, error) {
+func (s *Store) FindOne(collection string, filter interface{}, opts ...*options.FindOneOptions) (bson.D, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db := s.db.Database(dbName)
 	col := db.Collection(collection)
-	item := col.FindOne(ctx, filter)
+	item := col.FindOne(ctx, filter, opts...)
 
 	var res bson.D
 	err := item.Decode(&res)
@@ -125,7 +125,7 @@ func (s *Store) FindAllServices() ([]models.Service, error) {
 
 	db := s.db.Database(dbName)
 	col := db.Collection("services")
-	cur, err := col.Find(ctx, bson.M{})
+	cur, err := col.Find(ctx, bson.M{"deleted": false})
 
 	if err != nil {
 		return nil, err
@@ -165,13 +165,14 @@ func (s *Store) FindAllCategories(filter bson.M) ([]models.Category, error) {
 }
 
 // FindAllPosts returns slice of pages and error
-func (s *Store) FindAllPosts(opts ...*options.FindOptions) ([]models.Post, error) {
+func (s *Store) FindAllPosts(filter bson.M, opts ...*options.FindOptions) ([]models.Post, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db := s.db.Database(dbName)
 	col := db.Collection("posts")
-	cur, err := col.Find(ctx, bson.M{}, opts...)
+	cur, err := col.Find(ctx, filter, opts...)
+	// cur, err := col.Find(ctx, bson.M{"categoryurl": "/category/news", "deleted": false}, opts...)
 
 	if err != nil {
 		return nil, err
@@ -187,6 +188,8 @@ func (s *Store) FindAllPosts(opts ...*options.FindOptions) ([]models.Post, error
 	return posts, nil
 }
 
+// findPostByCategoryURL
+
 // CountAllPosts returns slice of pages and error
 func (s *Store) CountAllPosts(opts ...*options.CountOptions) (int64, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
@@ -194,7 +197,7 @@ func (s *Store) CountAllPosts(opts ...*options.CountOptions) (int64, error) {
 
 	db := s.db.Database(dbName)
 	col := db.Collection("posts")
-	cnt, err := col.CountDocuments(ctx, bson.M{}, opts...)
+	cnt, err := col.CountDocuments(ctx, bson.M{"deleted": false}, opts...)
 
 	if err != nil {
 		return -1, err
@@ -208,13 +211,13 @@ func (s *Store) CountAllPosts(opts ...*options.CountOptions) (int64, error) {
 }
 
 // FindMaterials return slice of materials and error, if something went wrong
-func (s *Store) FindMaterials(filter bson.M) ([]models.Material, error) {
+func (s *Store) FindMaterials(filter bson.M, opts ...*options.FindOptions) ([]models.Material, error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db := s.db.Database(dbName)
 	col := db.Collection("materials")
-	cur, err := col.Find(ctx, filter)
+	cur, err := col.Find(ctx, filter, opts...)
 
 	if err != nil {
 		return nil, err
@@ -290,3 +293,19 @@ func (s *Store) UpdateOne(collection string, filter interface{}, update interfac
 
 	return r, nil
 }
+
+// func (s *Store) DeleteOne(collection string, filter interface{}) {
+// 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+// 	defer cancel()
+
+// 	db := s.db.Database(dbName)
+// 	col := db.Collection(collection)
+
+// 	r, err := col.DeleteOne(ctx, filter, )
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return r, nil
+// }

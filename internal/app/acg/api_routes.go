@@ -125,7 +125,7 @@ func (s *Server) handleCreatePage() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(np)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -158,14 +158,14 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(np)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		bsbytes, err := bson.Marshal(np)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -173,7 +173,7 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 		err = bson.Unmarshal(bsbytes, &bs)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -184,7 +184,7 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 		res, err := s.store.UpdateOne("pages", bson.M{"_id": np.ID}, bson.M{"$set": bs})
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -192,13 +192,12 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 			bsbytes, err = json.Marshal(np.ID)
 			if err != nil {
 				s.logger.Error(err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				s.error(w, r, http.StatusInternalServerError, err)
 				return
 			}
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(bsbytes)
+		s.respond(w, r, http.StatusOK, bsbytes)
 	}
 }
 
@@ -209,7 +208,8 @@ func (s *Server) handleUpdatePage() http.HandlerFunc {
 func (s *Server) handleCreateService() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ns := &models.Service{
-			ID: primitive.NewObjectID(),
+			ID:      primitive.NewObjectID(),
+			Deleted: false,
 		}
 
 		err := json.NewDecoder(r.Body).Decode(ns)
@@ -318,13 +318,58 @@ func (s *Server) handleUpdateService() http.HandlerFunc {
 	}
 }
 
+// Handle DELETE on /services
+func (s *Server) handleDeleteService() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ns := &models.Service{}
+
+		err := json.NewDecoder(r.Body).Decode(ns)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		// Set deleted flag for service
+		ns.Deleted = true
+
+		bsbytes, err := bson.Marshal(ns)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		_, err = s.store.UpdateOne("services", bson.M{"_id": ns.ID}, bson.M{"$set": bs})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusOK, "Service successfully deleted")
+	}
+}
+
 /*
 * Posts Handlers for CRUD operations
  */
 // Handel GET all posts on /posts
 func (s *Server) handleGetPosts() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		posts, err := s.store.FindAllPosts()
+		posts, err := s.store.FindAllPosts(bson.M{"deleted": false})
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -448,6 +493,51 @@ func (s *Server) handleUpdatePost() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(bsbytes)
+	}
+}
+
+// Handle DELETE on /posts
+func (s *Server) handleDeletePost() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nc := &models.Post{}
+
+		err := json.NewDecoder(r.Body).Decode(nc)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		nc.Deleted = true
+
+		bsbytes, err := bson.Marshal(nc)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		// Delete ID to map (for corrent update)
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		_, err = s.store.UpdateOne("posts", bson.M{"_id": nc.ID}, bson.M{"$set": bs})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusOK, "Post successfully deleted")
 	}
 }
 
@@ -619,7 +709,7 @@ func (s *Server) handleCreateMaterial() http.HandlerFunc {
 // Handel GET materials on /materials
 func (s *Server) handleGetMaterials() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		mats, err := s.store.FindMaterials(bson.M{})
+		mats, err := s.store.FindMaterials(bson.M{"deleted": false})
 		if err != nil {
 			s.logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -664,42 +754,49 @@ func (s *Server) handleGetMatcat() http.HandlerFunc {
 }
 
 func (s *Server) handleGetOneMatcat() http.HandlerFunc {
-	type req_body struct {
-		Slug string `bson:"slug" json:"slug"`
+	type matcat struct {
+		models.MatCategory
+		Materials []models.Material `bson:"materials,omitempty" json:"materials,omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		// rb := &req_body{}
-		sl, ok := r.URL.Query()["slug"]
-		if !ok {
-			http.Error(w, errors.New("Query param not set. Try again.").Error(), http.StatusInternalServerError)
+		sl := r.URL.Query().Get("slug")
+		if sl == "" {
+			s.error(w, r, http.StatusBadRequest, errors.New("Query param not set. Try again."))
 			return
 		}
 
-		// err := json.NewDecoder(r.Body).Decode(rb)
-		// if err != nil {
-		// 	s.logger.Error(err)
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-
-		// bs, err := s.store.FindOne("matcategories", bson.M{"slug": rb.Slug})
-		bs, err := s.store.FindOne("matcategories", bson.M{"slug": sl[0]})
+		bs, err := s.store.FindOne("matcategories", bson.M{"slug": sl})
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		js, err := bson.MarshalExtJSON(bs, true, true)
+		var matcategory models.MatCategory
+
+		materials, err := s.store.FindMaterials(bson.M{"category_slug": sl, "deleted": false})
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(js)
+		bsbytes, err := bson.Marshal(bs)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		err = bson.Unmarshal(bsbytes, &matcategory)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusOK, matcat{matcategory, materials})
 	}
 }
 
@@ -934,7 +1031,11 @@ func (s *Server) handleLogin() http.HandlerFunc {
 			return
 		}
 
-		s.logger.Debug(req)
+		if req.Password == "" || req.Username == "" {
+			s.logger.Debug("Empty username or password")
+			s.error(w, r, http.StatusBadRequest, errWrongPasswordOrLogin)
+			return
+		}
 
 		bs, err := s.store.FindOne("users", bson.M{"username": req.Username})
 		if err != nil {
@@ -964,7 +1065,7 @@ func (s *Server) handleLogin() http.HandlerFunc {
 			return
 		}
 
-		expTime := time.Now().Add(1 * time.Hour)
+		expTime := time.Now().Add(12 * time.Hour)
 		// expTime := time.Now().Add(2 * time.Minute)
 		claims := &Claims{
 			Username: u.Username,
@@ -988,7 +1089,10 @@ func (s *Server) handleLogin() http.HandlerFunc {
 			HttpOnly: true,
 		})
 
-		w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", tokenStr))
-		s.respond(w, r, http.StatusOK, u)
+		// w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", tokenStr))
+		s.respond(w, r, http.StatusOK, struct {
+			Token string       `json:"token"`
+			User  *models.User `json:"user"`
+		}{tokenStr, u})
 	}
 }

@@ -47,7 +47,7 @@ func (s *Server) handleHomePage() http.HandlerFunc {
 		findOptions := options.Find()
 		findOptions.SetLimit(3)
 		findOptions.SetSort(bson.M{"time": -1})
-		psts, err := s.store.FindAllPosts(findOptions)
+		psts, err := s.store.FindAllPosts(bson.M{"deleted": false}, findOptions)
 
 		bsb, err := bson.Marshal(bs)
 		if err != nil {
@@ -135,7 +135,7 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 		findOptions.SetSort(bson.M{"time": -1})
 		findOptions.SetSkip((pageNum - 1) * pstsPerPage)
 
-		psts, err := s.store.FindAllPosts(findOptions)
+		psts, err := s.store.FindAllPosts(bson.M{"deleted": false}, findOptions)
 		if err != nil {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
@@ -197,6 +197,7 @@ func (s *Server) handlePostsPage() http.HandlerFunc {
 func (s *Server) handleCategoryPage() http.HandlerFunc {
 	type categorypage struct {
 		Page       models.Page
+		Posts      []models.Post
 		Current    models.Category
 		Categories []models.Category
 	}
@@ -236,6 +237,13 @@ func (s *Server) handleCategoryPage() http.HandlerFunc {
 			return
 		}
 
+		posts, err := s.store.FindAllPosts(bson.M{"categoryurl": r.URL, "deleted": false})
+		if err != nil {
+			s.logger.Error(err)
+			http.Redirect(w, r, "/404", http.StatusInternalServerError)
+			return
+		}
+
 		ct := &categorypage{
 			Page: models.Page{
 				Title:    m.Title,
@@ -244,6 +252,7 @@ func (s *Server) handleCategoryPage() http.HandlerFunc {
 				Slug:     m.URL,
 				PageData: nil,
 			},
+			Posts:      posts,
 			Current:    m,
 			Categories: cats,
 		}
@@ -291,9 +300,14 @@ func (s *Server) handleServicesPage() http.HandlerFunc {
 
 // Materials page
 func (s *Server) handleMaterialsPage() http.HandlerFunc {
+	type matcat struct {
+		models.MatCategory
+		Materials []models.Material
+	}
+
 	type materialspage struct {
 		Page    models.Page
-		MatCats []models.MatCategory
+		MatCats []matcat
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -324,18 +338,31 @@ func (s *Server) handleMaterialsPage() http.HandlerFunc {
 		findOptions.Projection = bson.M{"materials": bson.M{"$slice": -3}}
 		// findOptions.SetSort(bson.M{"materials.timestring": 1})
 
-		mats, err := s.store.FindMatcategories(bson.M{}, findOptions)
+		matcategories, err := s.store.FindMatcategories(bson.M{}, findOptions)
 		if err != nil {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusNotFound)
 			return
 		}
 
-		// Sort in backward order
-		for i := range mats {
-			l := len(mats[i].Materials)
-			mats[i].Materials[0], mats[i].Materials[l-1] = mats[i].Materials[l-1], mats[i].Materials[0]
+		mats := make([]matcat, len(matcategories))
+
+		for i, mc := range matcategories {
+			mats[i].MatCategory = mc
+
+			findOptions = options.Find()
+			findOptions.SetLimit(3)
+			findOptions.SetSort(bson.M{"time": -1})
+
+			materials, _ := s.store.FindMaterials(bson.M{"category_slug": mc.Slug, "deleted": false}, findOptions)
+			mats[i].Materials = materials
 		}
+
+		// Sort in backward order
+		// for i := range mats {
+		// 	l := len(mats[i].Materials)
+		// 	mats[i].Materials[0], mats[i].Materials[l-1] = mats[i].Materials[l-1], mats[i].Materials[0]
+		// }
 
 		pageContent := &materialspage{m, mats}
 

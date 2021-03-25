@@ -12,6 +12,7 @@ type Service struct {
 	Title    string             `bson:"title,omitempty" json:"title,omitempty"`
 	Subtitle string             `bson:"subtitle,omitempty" json:"subtitle,omitempty"`
 	Desc     string             `bson:"desc,omitempty" json:"desc,omitempty"`
+	Deleted  bool               `bson:"deleted" json:"-"`
 }
 
 // ServiceImage represets basic structure of service card image

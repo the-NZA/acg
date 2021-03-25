@@ -44,6 +44,10 @@ func (s *Server) Start() error {
 	// TODO configure cors
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "OPTIONS"},
+		// AllowCredentials: true,
+		AllowedHeaders: []string{"Authorization", "X-Auth-Key", "X-Auth-Secret", "Content-Type", "X-Requested-With"},
+		// Debug:          true,
 	})
 
 	return http.ListenAndServe(s.config.BindAddr, corsHandler.Handler(s.router))
@@ -84,7 +88,7 @@ func (s *Server) configureRouter() {
 
 	/* API ROUTES */
 	// Upload API route
-	s.router.HandleFunc("/api/upload", s.authMiddleware(s.handleUploadFile())).Methods("POST")
+	s.router.HandleFunc("/api/upload", s.authMiddleware(s.handleUploadFile())).Methods("POST", "OPTIONS")
 
 	// Auth API routes
 	// Maybe /api/auth/reg will be turned off in production
@@ -101,11 +105,13 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/services", s.authMiddleware(s.handleGetServices())).Methods("GET")
 	s.router.HandleFunc("/api/services", s.authMiddleware(s.handleCreateService())).Methods("POST")
 	s.router.HandleFunc("/api/services", s.authMiddleware(s.handleUpdateService())).Methods("PUT")
+	s.router.HandleFunc("/api/services", s.authMiddleware(s.handleDeleteService())).Methods("DELETE")
 
 	// Posts API routes
 	s.router.HandleFunc("/api/posts", s.authMiddleware(s.handleGetPosts())).Methods("GET")
 	s.router.HandleFunc("/api/posts", s.authMiddleware(s.handleCreatePost())).Methods("POST")
 	s.router.HandleFunc("/api/posts", s.authMiddleware(s.handleUpdatePost())).Methods("PUT")
+	s.router.HandleFunc("/api/posts", s.authMiddleware(s.handleDeletePost())).Methods("DELETE")
 
 	// Categories API routes
 	s.router.HandleFunc("/api/categories", s.authMiddleware(s.handleGetCategories())).Methods("GET")

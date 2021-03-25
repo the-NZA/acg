@@ -20,6 +20,7 @@ type Post struct {
 	MetaDesc    string             `bson:"metadesc,omitempty" json:"metadesc,omitempty"`
 	PageData    []Block            `bson:"pagedata,omitempty" json:"pagedata,omitempty"`
 	PostImg     string             `bson:"postimg,omitempty" json:"postimg,omitempty"`
+	Deleted     bool               `bson:"deleted" json:"-"`
 }
 
 // Category represents structure for each post category
@@ -29,7 +30,7 @@ type Category struct {
 	Subtitle string             `bson:"subtitle,omitempty" json:"subtitle,omitempty"`
 	URL      string             `bson:"url,omitempty" json:"url,omitempty"`
 	MetaDesc string             `bson:"metadesc,omitempty" json:"metadesc,omitempty"`
-	Posts    []Post             `bson:"posts,omitempty" json:"posts,omitempty"`
+	// Posts    []Post             `bson:"posts,omitempty" json:"posts,omitempty"`
 }
 
 // t := time.Now()
