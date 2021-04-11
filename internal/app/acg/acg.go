@@ -122,8 +122,8 @@ func (s *Server) configureRouter() {
 	// Materials API routes
 	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleGetMaterials())).Methods("GET")
 	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleCreateMaterial())).Methods("POST")
-	// TODO or not meterial update
-	// s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleUpdateMaterial())).Methods("PUT")
+	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleUpdateMaterial())).Methods("PUT")
+	// TODO: delete material
 
 	// MatCategories API routes
 	// /api/matcategory doesn't wrapped in authMiddleware because it uses in all frontend part

@@ -23,26 +23,30 @@
 
 		<main class="posts__main">
 			<div class="posts__cards">
-				{{ range .Posts }}
-				<div class="post_card">
-					<div class="post_card__image">
-						{{if .PostImg}}
-							<img src="{{.PostImg}}" alt="{{.Title}}">
-						{{end}}
-					</div>
-					<div class="post_card__content">
-						<h4 class="post_card__title">
-							{{.Title}}
-						</h4>
-						<p class="post_card__text">
-							{{.Excerpt}}
-						</p>
-						<div class="post_card__footer">
-							<a href="{{.URL}}" class="post_card__btn">Читать</a>
-							<p class="post_card__date">{{.TimeString}}</p>
+				{{ if .Posts }}
+					{{ range .Posts }}
+					<div class="post_card">
+						<div class="post_card__image">
+							{{if .PostImg}}
+								<img src="{{.PostImg}}" alt="{{.Title}}">
+							{{end}}
+						</div>
+						<div class="post_card__content">
+							<h4 class="post_card__title">
+								{{.Title}}
+							</h4>
+							<p class="post_card__text">
+								{{.Excerpt}}
+							</p>
+							<div class="post_card__footer">
+								<a href="{{.URL}}" class="post_card__btn">Читать</a>
+								<p class="post_card__date">{{.TimeString}}</p>
+							</div>
 						</div>
 					</div>
-				</div>
+					{{end}}
+				{{ else }}
+					<p>В этой категории пока нет записей</p>
 				{{end}}
 			</div>
 		</main>

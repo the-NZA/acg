@@ -252,7 +252,12 @@ func (s *Server) handleCategoryPage() http.HandlerFunc {
 			return
 		}
 
-		posts, err := s.store.FindAllPosts(bson.M{"categoryurl": r.URL, "deleted": false})
+		findOptions := options.Find()
+		// findOptions.SetLimit(pstsPerPage)
+		findOptions.SetSort(bson.M{"time": -1})
+		// findOptions.SetSkip((pageNum - 1) * pstsPerPage)
+
+		posts, err := s.store.FindAllPosts(bson.M{"categoryurl": r.URL, "deleted": false}, findOptions)
 		if err != nil {
 			s.logger.Error(err)
 			http.Redirect(w, r, "/404", http.StatusInternalServerError)

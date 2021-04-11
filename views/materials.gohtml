@@ -12,7 +12,9 @@
 					<div class="widget__content">
 						<ul class="widget__categories">
 						{{range .MatCats}}
-							<li><a data-slug="{{.Slug}}">{{.Title}}</a></li>
+							{{ if .Materials }}
+								<li><a data-slug="{{.Slug}}">{{.Title}}</a></li>
+							{{end}}
 						{{end}}
 							<!-- <li><a href="#" class="active">Аудит</a></li> -->
 							<!-- <li><a href="#">Бухгалтерия</a></li> -->
@@ -25,33 +27,34 @@
 			<main class="materials__main">
 			{{range .MatCats}}
 
-				<section class="materials__category mcat" data-section={{.Slug}}>
-					<div class="mcat__header">
-						<h3 class="mcat__title">{{.Title}}</h3>
-						<p class="mcat__desc">{{.Desc}}</p>
-					</div>
-	
-					<div class="mcat__container">
-					{{range .Materials}}
-						<div class="mcard">
-							<div class="mcard__header">
-								<h4 class="mcard__title">{{.Title}}</h4>
-								<span class="mcard__date">{{.TimeString}}</span>
-								<button class="mcard__toggle"></button>
-							</div>
-	
-							<div class="mcard__body">
-								<p>{{.Desc}}</p>
-	
-								<a href="{{.FileLink}}" download class="mcard__download download_link">Скачать</a>
-							</div>
+				{{ if .Materials }}
+					<section class="materials__category mcat" data-section={{.Slug}}>
+						<div class="mcat__header">
+							<h3 class="mcat__title">{{.Title}}</h3>
+							<p class="mcat__desc">{{.Desc}}</p>
 						</div>
-					{{end}}
-					</div>
-	
-					<button class="mcat__showall" data-slug="{{.Slug}}">Показать все</button>
-				</section>
-	
+		
+						<div class="mcat__container">
+						{{range .Materials}}
+							<div class="mcard">
+								<div class="mcard__header">
+									<h4 class="mcard__title">{{.Title}}</h4>
+									<span class="mcard__date">{{.TimeString}}</span>
+									<button class="mcard__toggle"></button>
+								</div>
+		
+								<div class="mcard__body">
+									<p>{{.Desc}}</p>
+		
+									<a href="{{.FileLink}}" download class="mcard__download download_link">Скачать</a>
+								</div>
+							</div>
+						{{end}}
+						</div>
+		
+						<button class="mcat__showall" data-slug="{{.Slug}}">Показать все</button>
+					</section>
+				{{end}}
 			{{end}}
 			</main>
 		</div>

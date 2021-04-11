@@ -394,7 +394,7 @@ func (s *Server) handleCreatePost() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(np)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -402,14 +402,14 @@ func (s *Server) handleCreatePost() http.HandlerFunc {
 
 		if err = np.Validate(); err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			s.error(w, r, http.StatusBadRequest, err)
 			return
 		}
 
 		res, err := s.store.InsertOne("posts", np)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -418,7 +418,7 @@ func (s *Server) handleCreatePost() http.HandlerFunc {
 		js, err := json.Marshal(res.InsertedID)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -780,6 +780,48 @@ func (s *Server) handleCreateMaterial() http.HandlerFunc {
 	}
 }
 
+// Handle PUT materials on /materials
+func (s *Server) handleUpdateMaterial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nm := &models.Material{}
+
+		err := json.NewDecoder(r.Body).Decode(nm)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		bsbytes, err := bson.Marshal(nm)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		_, err = s.store.UpdateOne("materials", bson.M{"_id": nm.ID}, bson.M{"$set": bs})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusOK, "Successfuly updated")
+	}
+}
+
 // Handel GET materials on /materials
 func (s *Server) handleGetMaterials() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -801,7 +843,7 @@ func (s *Server) handleGetMaterials() http.HandlerFunc {
 func (s *Server) handleGetMatcat() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		mats, err := s.store.FindMatcategories(bson.M{"deleted": false})
-		s.logger.Debugln(mats)
+		// s.logger.Debugln(mats)
 		if err != nil {
 			s.logger.Error(err)
 			s.respond(w, r, http.StatusInternalServerError, err)
@@ -868,7 +910,7 @@ func (s *Server) handleCreateMatcat() http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(np)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -876,26 +918,18 @@ func (s *Server) handleCreateMatcat() http.HandlerFunc {
 
 		if err = np.Validate(); err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			s.error(w, r, http.StatusBadRequest, err)
 			return
 		}
 
 		res, err := s.store.InsertOne("matcategories", np)
 		if err != nil {
 			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		js, err := json.Marshal(res.InsertedID)
-		if err != nil {
-			s.logger.Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(js)
+		s.respond(w, r, http.StatusCreated, res.InsertedID)
 	}
 }
 
