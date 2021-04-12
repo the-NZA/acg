@@ -766,7 +766,7 @@ func (s *Server) handleCreateMaterial() http.HandlerFunc {
 			return
 		}
 
-		s.store.UpdateOne("matcategories", bson.M{"title": nm.Category}, bson.M{"$push": bson.M{"materials": nm}})
+		// s.store.UpdateOne("matcategories", bson.M{"title": nm.Category}, bson.M{"$push": bson.M{"materials": nm}})
 
 		js, err := json.Marshal(res.InsertedID)
 		if err != nil {
@@ -777,6 +777,50 @@ func (s *Server) handleCreateMaterial() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(js)
+	}
+}
+
+func (s *Server) handleDeleteMaterial() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ns := &models.Material{}
+
+		err := json.NewDecoder(r.Body).Decode(ns)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		// Set deleted flag for material
+		ns.Deleted = true
+
+		bsbytes, err := bson.Marshal(ns)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		_, err = s.store.UpdateOne("materials", bson.M{"_id": ns.ID}, bson.M{"$set": bs})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.respond(w, r, http.StatusOK, "Material successfully deleted")
 	}
 }
 
@@ -930,6 +974,95 @@ func (s *Server) handleCreateMatcat() http.HandlerFunc {
 		}
 
 		s.respond(w, r, http.StatusCreated, res.InsertedID)
+	}
+}
+
+func (s *Server) handleDeleteMatcat() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		nc := &models.MatCategory{}
+
+		err := json.NewDecoder(r.Body).Decode(nc)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		nc.Deleted = true
+
+		bsbytes, err := bson.Marshal(nc)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		var bs bson.M
+		err = bson.Unmarshal(bsbytes, &bs)
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		if _, exist := bs["_id"]; exist {
+			delete(bs, "_id")
+		}
+
+		_, err = s.store.UpdateOne("matcategories", bson.M{"_id": nc.ID}, bson.M{"$set": bs})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		cat, err := s.store.FindOne("matcategories", bson.M{"_id": nc.ID})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.logger.Infoln(cat.Map()["category_slug"])
+
+		// posts, err := s.store.FindAllPosts(bson.M{"categoryurl": cat.Map()["url"]})
+		materials, err := s.store.FindMaterials(bson.M{"category_slug": cat.Map()["slug"]})
+		if err != nil {
+			s.logger.Error(err)
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		for i := range materials {
+			materials[i].Deleted = true
+
+			matbytes, err := bson.Marshal(materials[i])
+			if err != nil {
+				s.logger.Error(err)
+				s.error(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+			var matbs bson.M
+			err = bson.Unmarshal(matbytes, &matbs)
+			if err != nil {
+				s.logger.Error(err)
+				s.error(w, r, http.StatusInternalServerError, err)
+				return
+			}
+
+			// Delete ID to map (for corrent update)
+			if _, exist := matbs["_id"]; exist {
+				delete(matbs, "_id")
+			}
+
+			_, err = s.store.UpdateOne("materials", bson.M{"_id": materials[i].ID}, bson.M{"$set": matbs})
+
+		}
+
+		// posts, err := s.store.FindAllPosts({"ca"})
+
+		s.respond(w, r, http.StatusOK, "MatCategory successfully deleted")
 	}
 }
 

@@ -123,6 +123,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleGetMaterials())).Methods("GET")
 	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleCreateMaterial())).Methods("POST")
 	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleUpdateMaterial())).Methods("PUT")
+	s.router.HandleFunc("/api/materials", s.authMiddleware(s.handleDeleteMaterial())).Methods("DELETE")
 	// TODO: delete material
 
 	// MatCategories API routes
@@ -131,6 +132,7 @@ func (s *Server) configureRouter() {
 	s.router.HandleFunc("/api/matcategories", s.authMiddleware(s.handleGetMatcat())).Methods("GET")
 	s.router.HandleFunc("/api/matcategories", s.authMiddleware(s.handleCreateMatcat())).Methods("POST")
 	s.router.HandleFunc("/api/matcategories", s.authMiddleware(s.handleUpdateMatcat())).Methods("PUT")
+	s.router.HandleFunc("/api/matcategories", s.authMiddleware(s.handleDeleteMatcat())).Methods("DELETE")
 
 	s.router.HandleFunc("/404", notFound)
 	// 404 Handler
